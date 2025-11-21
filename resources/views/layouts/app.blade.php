@@ -20,8 +20,9 @@
         .menu-nav {
             justify-content: space-between;
             display: flex;
-            background-color: #24034d;
+            background: #24034d;
             height: 5.5rem;
+
 
 
         }
@@ -61,8 +62,21 @@
             color: #f2f2f2;
 
         }
+
+        #conteudo {
+            
+            width: 1600px;
+            max-width: 100%;
+            margin: 0 auto;
+
+        }
     </style>
     {{-- MENU DE NAVEGAÇÃO --}}
+    <form method="POST" action="{{ route('product.produtos') }}" id="formulario">
+        @csrf
+        <input type="hidden" name="categoria" id="categoria" />
+    </form>
+
     <header>
         <nav class="menu-nav">
             {{-- LOGOTIPO --}}
@@ -73,13 +87,14 @@
             {{-- BOTÕES --}}
             <div class="botoes-nav">
                 <ul>
-                    <li>CALÇAS</li>
-                    <li>BODYS</li>
-                    <li>CROPPED</li>
-                    <li>CAMISETA</li>
-                    <li>CONJUNTOS</li>
-                    <li>VESTIDOS</li>
-                    <li>ACESSÓRIOS</li>
+
+                    <li onclick="acessarProdutos('Calça')">CALÇAS</li>
+                    <li onclick="acessarProdutos('Body')">BODYS</li>
+                    <li onclick="acessarProdutos('Cropped')">CROPPED</li>
+                    <li onclick="acessarProdutos('Camiseta')">CAMISETA</li>
+                    <li onclick="acessarProdutos('Conjunto')">CONJUNTOS</li>
+                    <li onclick="acessarProdutos('Vestido')">VESTIDOS</li>
+                    <li onclick="acessarProdutos('Acessório')">ACESSÓRIOS</li>
                 </ul>
             </div>
 
@@ -94,12 +109,29 @@
     </header>
 
     {{-- CONTEÚDO --}}
-    @yield('content')
+    <div id="conteudo">
+        @yield('content')
 
+
+    </div>
     {{-- RODAPÉ --}}
     <footer>
 
     </footer>
+
+    <script>
+        //Funcionamento do Mecanismo do ID do Carrossel
+        categoria = document.getElementById('categoria');
+        formulario = document.getElementById('formulario');
+
+        function acessarProdutos(valor) {
+            categoria.value = valor;
+            formulario.submit();
+
+        }
+    </script>
+
+
 </body>
 
 </html>

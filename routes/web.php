@@ -2,4 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductController;
+
+//Rota Home
 Route::get('/', [HomeController::class, 'index'])->name('home.index');
+
+//Rota Product
+Route::post('/product/produtos', [ProductController::class, 'produtos'])->name('product.produtos');
