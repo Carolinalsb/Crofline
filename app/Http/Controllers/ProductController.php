@@ -14,4 +14,11 @@ class ProductController extends Controller{
 
         return view('product.produtos', compact('dados'));
     }
+    public function show($id){
+        $produto = DB::table('produtos')
+        ->select('*')
+        ->where('id', $id)
+        ->first();    
+        return view('product.show', compact('produto'));
+    }
 }

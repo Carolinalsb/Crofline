@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 class HomeController extends Controller{
     public function index(){
        
-        $carrossel = DB::table('produtos')->select('*')->get();
+        $carrossel = DB::table('produtos')->select('*')->whereNotNull('carrossel_item')->get();
 
         return view('home.index', compact('carrossel'));
     }
