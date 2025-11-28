@@ -109,16 +109,27 @@
             display: flex;
             border-radius: 20px;
             overflow: hidden;
+            background-color: #f4e8ff;
+            transition: all 0.4s ease;
         }
 
         #toggle {
             display: none;
         }
 
-        .left,
-        .right {
+        .left {
             flex: 1;
             padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background-color: #f4e8ff;
+            transition: all 0.6s ease;
+        }
+
+        .right {
+            flex: 1;
+            padding: 30px 34px 30px 34px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -184,8 +195,36 @@
         }
 
         .fechar-popup:hover i {
-            color: #ffffff;
+            color: #431280;
             transform: scale(1.08);
+        }
+
+        .botao-voltar {
+            position: absolute;
+            top: 12px;
+            left: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 20;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .botao-voltar i {
+            font-size: 26px;
+            color: #ffb3ff;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        .container-popup.step-2 .botao-voltar {
+            display: flex;
+        }
+
+        .botao-voltar:hover i {
+            color: #fff;
+            transform: translateX(-2px);
         }
 
         .campo-input {
@@ -243,13 +282,116 @@
             color: #24034d;
             margin-bottom: 20px;
             font-size: 1.8rem;
+            text-align: center;
         }
 
-        .form-login,
-        .form-cadastro {
+        .form-login {
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+
+        /* === CADASTRO EM DUAS ETAPAS === */
+
+        .form-cadastro {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cadastro-wrapper {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .cadastro-step {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            transition: transform 0.5s ease;
+        }
+
+        .cadastro-step1 {
+            transform: translateX(0);
+        }
+
+        .cadastro-step2 {
+            transform: translateX(100%);
+        }
+
+        .container-popup.step-2 .cadastro-step1 {
+            transform: translateX(-100%);
+        }
+
+        .container-popup.step-2 .cadastro-step2 {
+            transform: translateX(0);
+        }
+
+        .grid-cadastro {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px 20px;
+        }
+
+        #btn-continuar-cadastro {
+            margin-top: 16px;
+            width: 100%;
+        }
+
+        .container-popup.step-2 #btn-continuar-cadastro {
+            display: none;
+        }
+
+        #btn-cadastrar-final {
+            margin-top: 16px;
+            width: 100%;
+        }
+
+        /* === TOAST DE SUCESSO CADASTRO === */
+
+        .cadastro-sucesso-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 4000;
+            pointer-events: none;
+        }
+
+        .cadastro-sucesso-overlay.ativo {
+            display: flex;
+        }
+
+        .cadastro-sucesso-card {
+            background: #e6ffed;
+            border-radius: 16px;
+            padding: 18px 26px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid #22c55e;
+        }
+
+        .cadastro-sucesso-card i {
+            font-size: 28px;
+            color: #16a34a;
+        }
+
+        .cadastro-sucesso-card p {
+            margin: 0;
+            font-weight: 600;
+            color: #14532d;
+        }
+
+        .cadastro-sucesso-card span {
+            display: block;
+            font-size: 13px;
+            color: #166534;
         }
 
         @media (max-width: 768px) {
@@ -263,6 +405,10 @@
 
             .middle {
                 display: none;
+            }
+
+            .grid-cadastro {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -315,10 +461,16 @@
     <div id="popup-cadastro" class="popup-cadastro">
         <input type="checkbox" id="toggle">
 
-        <div class="container-popup">
+        <div class="container-popup" id="container-popup">
+
+            {{-- BOTÃO VOLTAR (apenas na etapa 2 do cadastro) --}}
+            <button type="button" class="botao-voltar" id="btn-voltar-etapa">
+                <i class="bi bi-arrow-left-circle"></i>
+            </button>
+
             {{-- Login --}}
             <div class="left">
-                <form class="form-login">
+                <form class="form-login" id="form-login">
                     <h2>Login</h2>
 
                     <div class="campo-input">
@@ -335,27 +487,80 @@
                 </form>
             </div>
 
-            {{-- Cadastro --}}
+            {{-- Cadastro (2 etapas) --}}
             <div class="right">
-                <form class="form-cadastro">
+                <form class="form-cadastro" id="form-cadastro">
                     <h2>Cadastro</h2>
 
-                    <div class="campo-input">
-                        <i class="bi bi-person"></i>
-                        <input type="text" id="cadastro-nome" placeholder="Digite seu nome" required>
+                    <div class="cadastro-wrapper">
+
+                        {{-- ETAPA 1 --}}
+                        <div class="cadastro-step cadastro-step1">
+                            <div class="grid-cadastro">
+                                <div class="campo-input">
+                                    <i class="bi bi-person"></i>
+                                    <input type="text" id="cadastro-nome" name="nome"
+                                        placeholder="Digite seu nome" required>
+                                </div>
+
+                                <div class="campo-input">
+                                    <i class="bi bi-envelope"></i>
+                                    <input type="email" id="cadastro-email" name="email"
+                                        placeholder="Digite seu e-mail" required>
+                                </div>
+
+                                <div class="campo-input">
+                                    <i class="bi bi-lock"></i>
+                                    <input type="password" id="cadastro-senha" name="senha"
+                                        placeholder="Crie uma senha" required>
+                                </div>
+
+                                <div class="campo-input">
+                                    <i class="bi bi-lock-fill"></i>
+                                    <input type="password" placeholder="Confirme sua senha"
+                                        id="cadastro-confirmar-senha-2" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- ETAPA 2 (complementar) --}}
+                        <div class="cadastro-step cadastro-step2">
+                            <div class="grid-cadastro">
+                                <div class="campo-input">
+                                    <i class="bi bi-person"></i>
+                                    <input type="text" placeholder="Digite o sobrenome" id="cadastro-sobrenome-2">
+                                </div>
+
+                                <div class="campo-input">
+                                    <i class="bi bi-telephone"></i>
+                                    <input type="text" placeholder="Digite o telefone" id="cadastro-telefone-2">
+                                </div>
+
+                                <div class="campo-input">
+                                    <i class="bi bi-calendar-event"></i>
+                                    <input type="date" placeholder="Data de nascimento"
+                                        id="cadastro-nascimento-2">
+                                </div>
+
+                                <div class="campo-input">
+                                    <i class="bi bi-person-vcard"></i>
+                                    <input type="text" id="cadastro-cpf" name="cpf"
+                                        placeholder="Digite seu CPF" pattern="\d{3}\.?\d{3}\.?\d{3}-?\d{2}">
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div class="campo-input">
-                        <i class="bi bi-envelope"></i>
-                        <input type="email" id="cadastro-email" placeholder="Digite seu e-mail" required>
-                    </div>
+                    {{-- Botão etapa 1 --}}
+                    <button type="button" id="btn-continuar-cadastro">
+                        Continuar
+                    </button>
 
-                    <div class="campo-input">
-                        <i class="bi bi-lock"></i>
-                        <input type="password" id="cadastro-senha" placeholder="Crie uma senha" required>
-                    </div>
-
-                    <button type="submit">Cadastrar</button>
+                    {{-- Botão etapa final --}}
+                    <button type="submit" id="btn-cadastrar-final">
+                        Cadastrar
+                    </button>
                 </form>
             </div>
 
@@ -364,7 +569,7 @@
                 <h2 id="middle-titulo">Bem-vindo à Crofline</h2>
                 <p id="middle-texto">Cadastre-se para começar</p>
                 <button id="middle-botao" class="botao-cadastrar-label"
-                        onclick="document.getElementById('toggle').click()">
+                    onclick="document.getElementById('toggle').click()">
                     Cadastrar
                 </button>
             </div>
@@ -376,6 +581,17 @@
         </button>
     </div>
 
+    {{-- TOAST / OVERLAY DE SUCESSO --}}
+    <div id="cadastro-sucesso" class="cadastro-sucesso-overlay">
+        <div class="cadastro-sucesso-card">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>
+                <p>Cadastro realizado com sucesso!</p>
+                <span id="cadastro-sucesso-contador">Fechando em 3...</span>
+            </div>
+        </div>
+    </div>
+
     {{-- RODAPÉ --}}
     <footer>
     </footer>
@@ -384,7 +600,6 @@
         // flag vindo do backend pra saber se está logado
         const CROFLINE_IS_AUTH = @json(auth()->check());
 
-        // categoria -> produtos
         const categoria = document.getElementById('categoria');
         const formulario = document.getElementById('formulario');
 
@@ -397,36 +612,87 @@
             const popup = document.getElementById('popup-cadastro');
             const conteudo = document.querySelector('.conteudo-principal');
             const toggle = document.getElementById('toggle');
+            const containerPopup = document.getElementById('container-popup');
 
-            if (popup && conteudo && toggle) {
+            if (popup && conteudo && toggle && containerPopup) {
                 popup.classList.add('ativo');
                 conteudo.classList.add('blur');
-                toggle.checked = false; // sempre começa no login
+                toggle.checked = false; // volta pro texto de cadastro
+                containerPopup.classList.remove('step-2'); // garante etapa 1 e esconde botão voltar
             }
+        }
+
+        function limparCamposPopup() {
+            const popup = document.getElementById('popup-cadastro');
+            if (!popup) return;
+
+            popup.querySelectorAll('input').forEach(input => {
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else {
+                    input.value = '';
+                }
+            });
         }
 
         function fecharPopupCadastro() {
             const popup = document.getElementById('popup-cadastro');
             const conteudo = document.querySelector('.conteudo-principal');
+            const containerPopup = document.getElementById('container-popup');
+            const toggle = document.getElementById('toggle');
 
             if (popup && conteudo) {
                 popup.classList.remove('ativo');
                 conteudo.classList.remove('blur');
             }
+
+            if (containerPopup) {
+                containerPopup.classList.remove('step-2'); // volta pra etapa 1
+            }
+
+            if (toggle) {
+                toggle.checked = false;
+            }
+
+            limparCamposPopup();
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
+        function mostrarSucessoCadastro() {
+            const overlay = document.getElementById('cadastro-sucesso');
+            const textoContador = document.getElementById('cadastro-sucesso-contador');
+
+            if (!overlay || !textoContador) return;
+
+            let contador = 3;
+            overlay.classList.add('ativo');
+            textoContador.textContent = `Fechando em ${contador}...`;
+
+            const intervalo = setInterval(() => {
+                contador--;
+                if (contador <= 0) {
+                    clearInterval(intervalo);
+                    overlay.classList.remove('ativo');
+                    fecharPopupCadastro();
+                } else {
+                    textoContador.textContent = `Fechando em ${contador}...`;
+                }
+            }, 1000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
             const loginIcon = document.getElementById('btn-login');
             const toggle = document.getElementById('toggle');
             const titulo = document.getElementById('middle-titulo');
             const texto = document.getElementById('middle-texto');
             const botao = document.getElementById('middle-botao');
             const botaoFechar = document.querySelector('.fechar-popup');
+            const containerPopup = document.getElementById('container-popup');
+            const btnContinuar = document.getElementById('btn-continuar-cadastro');
+            const btnVoltarEtapa = document.getElementById('btn-voltar-etapa');
 
             if (loginIcon) {
-                loginIcon.addEventListener('click', function () {
+                loginIcon.addEventListener('click', function() {
                     if (CROFLINE_IS_AUTH) {
-                        // Usuário já logado → futuro: direcionar para área do cliente
                         alert('Você já está logado. Aqui depois vamos abrir a área do cliente 😉');
                     } else {
                         abrirPopupCadastro();
@@ -436,11 +702,18 @@
 
             if (toggle && titulo && texto && botao) {
                 toggle.addEventListener('change', () => {
+                    // Sempre que trocar entre login/cadastro, volta pra etapa 1 e esconde botão voltar
+                    if (containerPopup) {
+                        containerPopup.classList.remove('step-2');
+                    }
+
                     if (toggle.checked) {
+                        // Modo LOGIN
                         titulo.textContent = 'Já é cadastrado?';
                         texto.textContent = 'Realize o login';
                         botao.textContent = 'Login';
                     } else {
+                        // Modo CADASTRO
                         titulo.textContent = 'Bem-vindo à Crofline';
                         texto.textContent = 'Cadastre-se para começar';
                         botao.textContent = 'Cadastrar';
@@ -452,18 +725,59 @@
                 botaoFechar.addEventListener('click', fecharPopupCadastro);
             }
 
-            // Validação básica dos formulários (por enquanto só front)
-            document.querySelectorAll('.popup-cadastro form').forEach(form => {
-                form.addEventListener('submit', function (e) {
-                    if (!form.checkValidity()) {
+            if (btnContinuar && containerPopup) {
+                btnContinuar.addEventListener('click', function() {
+                    containerPopup.classList.add('step-2');
+                });
+            }
+
+            if (btnVoltarEtapa && containerPopup) {
+                btnVoltarEtapa.addEventListener('click', function() {
+                    containerPopup.classList.remove('step-2');
+                });
+            }
+
+            const formLogin = document.getElementById('form-login');
+            if (formLogin) {
+                formLogin.addEventListener('submit', function(e) {
+                    if (!formLogin.checkValidity()) {
                         e.preventDefault();
                         alert('Por favor, preencha todos os campos corretamente.');
                     } else {
                         e.preventDefault();
-                        alert('Aqui depois entra a lógica real de login/cadastro no backend.');
+                        alert('Login: aqui entra a lógica do backend.');
                     }
                 });
-            });
+            }
+
+            const formCadastro = document.getElementById('form-cadastro');
+            if (formCadastro) {
+                formCadastro.addEventListener('submit', function(e) {
+                    if (!formCadastro.checkValidity()) {
+                        e.preventDefault();
+                        alert('Por favor, preencha todos os campos corretamente.');
+                        return;
+                    }
+
+                    const senha = document.getElementById('cadastro-senha')?.value || '';
+                    const confirmar = document.getElementById('cadastro-confirmar-senha-2')?.value || '';
+
+                    if (senha !== confirmar) {
+                        e.preventDefault();
+                        alert('As senhas não conferem.');
+                        return;
+                    }
+
+                    e.preventDefault();
+
+                    // Aqui depois vocês plugam o submit real (AJAX ou form normal)
+                    formCadastro.action = '{{ route('account.register') }}';
+                    formCadastro.method = 'POST';
+                    formCadastro.submit();
+
+                    mostrarSucessoCadastro();
+                });
+            }
         });
     </script>
 </body>
