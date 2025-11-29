@@ -3,8 +3,12 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@yield('title', 'Crofline')</title>
+
+    {{-- CSRF para Ajax --}}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- Bootstrap + Icons --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
@@ -79,7 +83,7 @@
             user-select: none;
         }
 
-        /* === POP-UP LOGIN/CADASTRO CROFLINE === */
+        /* POPUP */
 
         .popup-cadastro {
             position: fixed;
@@ -291,7 +295,7 @@
             gap: 10px;
         }
 
-        /* === CADASTRO EM DUAS ETAPAS === */
+        /* CADASTRO 2 ETAPAS */
 
         .form-cadastro {
             height: 100%;
@@ -350,7 +354,7 @@
             width: 100%;
         }
 
-        /* === TOAST DE SUCESSO CADASTRO === */
+        /* TOAST / OVERLAY DE SUCESSO */
 
         .cadastro-sucesso-overlay {
             position: fixed;
@@ -423,12 +427,10 @@
 
     <header>
         <nav class="menu-nav">
-            {{-- LOGOTIPO --}}
             <div class="logo">
                 <img src="/img/logoCrof.png" alt="Logo do Site" height="100px;" />
             </div>
 
-            {{-- BOTÕES --}}
             <div class="botoes-nav">
                 <ul>
                     <li onclick="acessarProdutos('Calça')">CALÇAS</li>
@@ -441,19 +443,16 @@
                 </ul>
             </div>
 
-            {{-- ÍCONES --}}
             <div class="login">
                 <i class="bi bi-search-heart-fill fs-3 me-2"></i>
                 <i class="bi bi-bag-heart-fill fs-3 me-2"></i>
-
-                {{-- ÍCONE LOGIN --}}
                 <i class="bi bi-person-fill fs-3 me-2" id="btn-login"></i>
             </div>
         </nav>
     </header>
 
     {{-- CONTEÚDO --}}
-    <div id="conteudo" class="conteudo-principal">
+    <div id="conteudo" class="conteudo-principal @if(session('success')) blur @endif">
         @yield('content')
     </div>
 
@@ -463,12 +462,10 @@
 
         <div class="container-popup" id="container-popup">
 
-            {{-- BOTÃO VOLTAR (apenas na etapa 2 do cadastro) --}}
             <button type="button" class="botao-voltar" id="btn-voltar-etapa">
                 <i class="bi bi-arrow-left-circle"></i>
             </button>
 
-            {{-- Login --}}
             <div class="left">
                 <form class="form-login" id="form-login">
                     <h2>Login</h2>
@@ -487,116 +484,98 @@
                 </form>
             </div>
 
-            {{-- Cadastro (2 etapas) --}}
             <div class="right">
                 <form class="form-cadastro" id="form-cadastro">
                     <h2>Cadastro</h2>
 
                     <div class="cadastro-wrapper">
 
-                        {{-- ETAPA 1 --}}
                         <div class="cadastro-step cadastro-step1">
                             <div class="grid-cadastro">
                                 <div class="campo-input">
                                     <i class="bi bi-person"></i>
-                                    <input type="text" id="cadastro-nome" name="nome"
-                                        placeholder="Digite seu nome" required>
+                                    <input type="text" id="cadastro-nome" name="nome" placeholder="Digite seu nome" required>
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-envelope"></i>
-                                    <input type="email" id="cadastro-email" name="email"
-                                        placeholder="Digite seu e-mail" required>
+                                    <input type="email" id="cadastro-email" name="email" placeholder="Digite seu e-mail" required>
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-lock"></i>
-                                    <input type="password" id="cadastro-senha" name="senha"
-                                        placeholder="Crie uma senha" required>
+                                    <input type="password" id="cadastro-senha" name="senha" placeholder="Crie uma senha" required>
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-lock-fill"></i>
-                                    <input type="password" placeholder="Confirme sua senha"
-                                        id="cadastro-confirmar-senha-2" required>
+                                    <input type="password" name="confirmar_senha" placeholder="Confirme sua senha" id="cadastro-confirmar-senha-2" required>
                                 </div>
                             </div>
                         </div>
 
-                        {{-- ETAPA 2 (complementar) --}}
                         <div class="cadastro-step cadastro-step2">
                             <div class="grid-cadastro">
                                 <div class="campo-input">
                                     <i class="bi bi-person"></i>
-                                    <input type="text" placeholder="Digite o sobrenome" id="cadastro-sobrenome-2">
+                                    <input type="text" name="sobrenome" placeholder="Digite o sobrenome" id="cadastro-sobrenome-2">
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-telephone"></i>
-                                    <input type="text" placeholder="Digite o telefone" id="cadastro-telefone-2">
+                                    <input type="text" name="telefone" placeholder="Digite o telefone" id="cadastro-telefone-2">
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-calendar-event"></i>
-                                    <input type="date" placeholder="Data de nascimento"
-                                        id="cadastro-nascimento-2">
+                                    <input type="date" name="data_nascimento" placeholder="Data de nascimento" id="cadastro-nascimento-2">
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-person-vcard"></i>
-                                    <input type="text" id="cadastro-cpf" name="cpf"
-                                        placeholder="Digite seu CPF" pattern="\d{3}\.?\d{3}\.?\d{3}-?\d{2}">
+                                    <input type="text" id="cadastro-cpf" name="cpf" placeholder="Digite seu CPF">
                                 </div>
                             </div>
                         </div>
 
                     </div>
 
-                    {{-- Botão etapa 1 --}}
-                    <button type="button" id="btn-continuar-cadastro">
-                        Continuar
-                    </button>
+                    <button type="button" id="btn-continuar-cadastro">Continuar</button>
 
-                    {{-- Botão etapa final --}}
-                    <button type="submit" id="btn-cadastrar-final">
-                        Cadastrar
-                    </button>
+                    <button type="submit" id="btn-cadastrar-final">Cadastrar</button>
                 </form>
             </div>
 
-            {{-- Painel lateral --}}
             <div class="middle">
                 <h2 id="middle-titulo">Bem-vindo à Crofline</h2>
                 <p id="middle-texto">Cadastre-se para começar</p>
                 <button id="middle-botao" class="botao-cadastrar-label"
-                    onclick="document.getElementById('toggle').click()">
+                        onclick="document.getElementById('toggle').click()">
                     Cadastrar
                 </button>
             </div>
         </div>
 
-        {{-- Botão fechar --}}
         <button type="button" class="fechar-popup" aria-label="Fechar">
             <i class="bi bi-x-circle"></i>
         </button>
     </div>
 
-    {{-- TOAST / OVERLAY DE SUCESSO --}}
-    <div id="cadastro-sucesso" class="cadastro-sucesso-overlay">
+    {{-- OVERLAY DE SUCESSO (via sessão ou Ajax) --}}
+    <div id="cadastro-sucesso"
+         class="cadastro-sucesso-overlay @if(session('success')) ativo @endif">
         <div class="cadastro-sucesso-card">
             <i class="bi bi-check-circle-fill"></i>
             <div>
-                <p>Cadastro realizado com sucesso!</p>
+                <p>{{ session('success') ?? 'Cadastro realizado com sucesso!' }}</p>
                 <span id="cadastro-sucesso-contador">Fechando em 3...</span>
             </div>
         </div>
     </div>
 
-    {{-- RODAPÉ --}}
-    <footer>
-    </footer>
+    <footer></footer>
 
-    <script>
+        <script>
         // flag vindo do backend pra saber se está logado
         const CROFLINE_IS_AUTH = @json(auth()->check());
 
@@ -617,7 +596,7 @@
             if (popup && conteudo && toggle && containerPopup) {
                 popup.classList.add('ativo');
                 conteudo.classList.add('blur');
-                toggle.checked = false; // volta pro texto de cadastro
+                toggle.checked = false;            // volta pro texto de cadastro
                 containerPopup.classList.remove('step-2'); // garante etapa 1 e esconde botão voltar
             }
         }
@@ -679,19 +658,19 @@
             }, 1000);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginIcon = document.getElementById('btn-login');
-            const toggle = document.getElementById('toggle');
-            const titulo = document.getElementById('middle-titulo');
-            const texto = document.getElementById('middle-texto');
-            const botao = document.getElementById('middle-botao');
-            const botaoFechar = document.querySelector('.fechar-popup');
-            const containerPopup = document.getElementById('container-popup');
-            const btnContinuar = document.getElementById('btn-continuar-cadastro');
-            const btnVoltarEtapa = document.getElementById('btn-voltar-etapa');
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginIcon       = document.getElementById('btn-login');
+            const toggle          = document.getElementById('toggle');
+            const titulo          = document.getElementById('middle-titulo');
+            const texto           = document.getElementById('middle-texto');
+            const botao           = document.getElementById('middle-botao');
+            const botaoFechar     = document.querySelector('.fechar-popup');
+            const containerPopup  = document.getElementById('container-popup');
+            const btnContinuar    = document.getElementById('btn-continuar-cadastro');
+            const btnVoltarEtapa  = document.getElementById('btn-voltar-etapa');
 
             if (loginIcon) {
-                loginIcon.addEventListener('click', function() {
+                loginIcon.addEventListener('click', function () {
                     if (CROFLINE_IS_AUTH) {
                         alert('Você já está logado. Aqui depois vamos abrir a área do cliente 😉');
                     } else {
@@ -726,20 +705,21 @@
             }
 
             if (btnContinuar && containerPopup) {
-                btnContinuar.addEventListener('click', function() {
+                btnContinuar.addEventListener('click', function () {
                     containerPopup.classList.add('step-2');
                 });
             }
 
             if (btnVoltarEtapa && containerPopup) {
-                btnVoltarEtapa.addEventListener('click', function() {
+                btnVoltarEtapa.addEventListener('click', function () {
                     containerPopup.classList.remove('step-2');
                 });
             }
 
+            // LOGIN (ainda fake)
             const formLogin = document.getElementById('form-login');
             if (formLogin) {
-                formLogin.addEventListener('submit', function(e) {
+                formLogin.addEventListener('submit', function (e) {
                     if (!formLogin.checkValidity()) {
                         e.preventDefault();
                         alert('Por favor, preencha todos os campos corretamente.');
@@ -750,11 +730,13 @@
                 });
             }
 
+            // ==== CADASTRO COM AJAX ====
             const formCadastro = document.getElementById('form-cadastro');
             if (formCadastro) {
-                formCadastro.addEventListener('submit', function(e) {
+                formCadastro.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
                     if (!formCadastro.checkValidity()) {
-                        e.preventDefault();
                         alert('Por favor, preencha todos os campos corretamente.');
                         return;
                     }
@@ -763,22 +745,152 @@
                     const confirmar = document.getElementById('cadastro-confirmar-senha-2')?.value || '';
 
                     if (senha !== confirmar) {
-                        e.preventDefault();
                         alert('As senhas não conferem.');
                         return;
                     }
 
-                    e.preventDefault();
+                    // Monta os dados
+                    const formData = new FormData(formCadastro);
+                    // Campos da etapa 2 (não têm "name", então vamos pegar manualmente)
+                    formData.append('sobrenome', document.getElementById('cadastro-sobrenome-2')?.value || '');
+                    formData.append('telefone', document.getElementById('cadastro-telefone-2')?.value || '');
+                    formData.append('data_nascimento', document.getElementById('cadastro-nascimento-2')?.value || '');
 
-                    // Aqui depois vocês plugam o submit real (AJAX ou form normal)
-                    formCadastro.action = '{{ route('account.register') }}';
-                    formCadastro.method = 'POST';
-                    formCadastro.submit();
+                    // CSRF token
+                    const token = document
+                        .querySelector('meta[name="csrf-token"]')
+                        .getAttribute('content');
 
-                    mostrarSucessoCadastro();
+                    formData.append('_token', token);
+
+                    try {
+                        const response = await fetch("{{ route('account.register') }}", {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        });
+
+                        if (response.status === 422) {
+                            const data = await response.json();
+                            let msg = 'Erro de validação:\n';
+                            for (const field in data.errors) {
+                                msg += '- ' + data.errors[field].join('\n- ') + '\n';
+                            }
+                            alert(msg);
+                            return;
+                        }
+
+                        if (!response.ok) {
+                            alert('Ocorreu um erro ao cadastrar. Tente novamente.');
+                            return;
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // sucesso
+                            mostrarSucessoCadastro();
+                        } else {
+                            alert(data.message || 'Ocorreu um erro ao cadastrar. Tente novamente.');
+                        }
+
+                    } catch (error) {
+                        console.error(error);
+                        alert('Ocorreu um erro ao cadastrar. Tente novamente.');
+                    }
                 });
             }
         });
+        // ... deixa o resto do script como está
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // já existem essas consts aí em cima, deixa
+        const formCadastro   = document.getElementById('form-cadastro');
+        const containerPopup = document.getElementById('container-popup');
+        const btnContinuar   = document.getElementById('btn-continuar');
+        const btnVoltarEtapa = document.getElementById('btn-voltar-etapa');
+
+        // === CONTINUAR / VOLTAR já estavam OK, mantenho ===
+        if (btnContinuar && containerPopup) {
+            btnContinuar.addEventListener('click', function () {
+                containerPopup.classList.add('step-2');
+            });
+        }
+
+        if (btnVoltarEtapa && containerPopup) {
+            btnVoltarEtapa.addEventListener('click', function () {
+                containerPopup.classList.remove('step-2');
+            });
+        }
+
+        // === SUBMIT DO CADASTRO COM AJAX ===
+        if (formCadastro) {
+            formCadastro.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                if (!formCadastro.checkValidity()) {
+                    alert('Por favor, preencha todos os campos corretamente.');
+                    return;
+                }
+
+                const senha     = document.getElementById('cadastro-senha')?.value || '';
+                const confirmar = document.getElementById('cadastro-confirmar-senha-2')?.value || '';
+
+                if (senha !== confirmar) {
+                    alert('As senhas não conferem.');
+                    return;
+                }
+
+                const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const url   = '{{ route('account.register') }}';
+
+                const formData = new FormData(formCadastro);
+                // garante que o back receba o campo de confirmação
+                formData.set('confirmar_senha', confirmar);
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json',
+                        },
+                        body: formData
+                    });
+
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (err) {
+                        console.error('Erro ao ler JSON:', err);
+                        alert('Ocorreu um erro ao cadastrar. Tente novamente.');
+                        return;
+                    }
+
+                    if (response.ok && data.success) {
+                        // mostra overlay de sucesso (3s) – usando a div que já criamos
+                        mostrarSucessoCadastro(); // essa função você já tem no código anterior
+                    } else {
+                        console.error('Erros de validação:', data);
+                        if (data.errors) {
+                            // mostra primeira mensagem de erro
+                            const firstField = Object.keys(data.errors)[0];
+                            alert(data.errors[firstField][0]);
+                        } else if (data.message) {
+                            alert(data.message);
+                        } else {
+                            alert('Ocorreu um erro ao cadastrar. Tente novamente.');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erro na requisição AJAX:', error);
+                    alert('Ocorreu um erro ao cadastrar. Tente novamente.');
+                }
+            });
+        }
+    });
     </script>
 </body>
 
