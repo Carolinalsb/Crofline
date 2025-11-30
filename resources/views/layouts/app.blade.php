@@ -7,69 +7,284 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@yield('title', 'Crofline')</title>
 
-    {{-- CSRF para Ajax --}}
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
     {{-- Bootstrap + Icons --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
+        :root {
+            --crofline-roxo-escuro: #24034d;
+            --crofline-roxo-fundo: #321150;
+            --crofline-rosa: #ff3b9d;
+            --crofline-texto: #f2f2f2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            margin: 0 auto;
-            background-color: #321150;
+            margin: 0;
+            padding-top: 5.5rem; /* espaço pro header fixo */
+            background-color: var(--crofline-roxo-fundo);
+            color: var(--crofline-texto);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
-        .menu-nav {
-            justify-content: space-between;
+        /* ===== HEADER FIXO / NAV TRANSPARENTE ===== */
+
+        .crofline-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2000;
+        }
+
+        .menu-nav-main {
             display: flex;
-            background: #24034d;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
             height: 5.5rem;
+            background: rgba(36, 3, 77, 0.88);
+            backdrop-filter: blur(10px);
         }
 
-        .logo {
+        .nav-left,
+        .nav-center,
+        .nav-right {
             display: flex;
             align-items: center;
         }
 
-        .botoes-nav {
+        .nav-center {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .nav-right {
+            justify-content: flex-end;
+        }
+
+        .nav-left {
+            gap: .75rem;
+        }
+
+        .btn-menu-mobile {
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--crofline-texto);
+            font-size: 1.8rem;
             display: flex;
             align-items: center;
             cursor: pointer;
+            padding: 0;
         }
 
-        .botoes-nav ul {
-            list-style: none;
-            display: flex;
-            gap: 70px;
-            padding: 20px;
-            justify-content: space-between;
-            color: #f2f2f2;
-            padding-bottom: 5px;
+        .btn-menu-mobile span {
+            font-size: 0.8rem;
+            letter-spacing: 0.18em;
+            margin-left: 0.25rem;
         }
 
-        .botoes-nav li:hover {
-            text-decoration: underline;
+        .brand-crofline {
+            letter-spacing: 0.4em;
+            font-size: 1.2rem;
+            color: var(--crofline-texto);
+            text-transform: uppercase;
+            text-align: center;
+            white-space: nowrap;
         }
 
-        .login {
+        /* LOGO DESKTOP */
+
+        .nav-logo-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-logo-desktop {
+            height: 8rem;
+            width: auto;
+            display: block;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .brand-logo-desktop:hover {
+            transform: scale(1.06);
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+        }
+
+        .nav-icons {
             display: flex;
             align-items: center;
-            justify-content: end;
-            gap: 10px;
-            padding-right: 16px;
+            gap: 0.75rem;
         }
 
-        .login i {
-            color: #f2f2f2;
+        .nav-icon-btn {
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--crofline-texto);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             transition: transform 0.15s ease, color 0.15s ease;
         }
 
-        .login i:hover {
+        .nav-icon-btn:hover {
             transform: translateY(-1px);
             color: #ffb3ff;
         }
+
+        /* ===== NAV CATEGORIAS DESKTOP DENTRO DA BARRA ===== */
+
+        .menu-categorias-desktop {
+            list-style: none;
+            display: flex;
+            gap: 3rem;
+            margin: 0;
+            padding: 0;
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+        }
+
+        .menu-categorias-desktop li {
+            position: relative;
+            cursor: pointer;
+            text-transform: uppercase;
+            color: var(--crofline-texto);
+        }
+
+        .menu-categorias-desktop li::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -6px;
+            width: 0;
+            height: 2px;
+            background: var(--crofline-rosa);
+            transform: translateX(-50%);
+            transition: width 0.25s ease;
+        }
+
+        .menu-categorias-desktop li:hover::after {
+            width: 50%;
+        }
+
+        /* ===== MENU MOBILE (SLIDE LEFT) ===== */
+
+        .menu-mobile-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 1900;
+        }
+
+        .menu-mobile-overlay.aberto {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .menu-mobile {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 270px;
+            max-width: 80%;
+            height: 100%;
+            background: #1b0437;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 2001;
+            padding: 1.5rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-mobile.aberto {
+            transform: translateX(0);
+        }
+
+        .menu-mobile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .menu-mobile-title {
+            font-size: 0.9rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .btn-close-menu {
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--crofline-texto);
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        .menu-mobile ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0 0 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .menu-mobile li {
+            color: #f7e9ff;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .menu-mobile li span {
+            border-bottom: 1px solid transparent;
+        }
+
+        .menu-mobile li:hover span {
+            border-color: var(--crofline-rosa);
+        }
+
+        .btn-login-mobile {
+            margin-top: auto;
+            border-radius: 999px;
+            border: 1px solid var(--crofline-rosa);
+            padding: 0.55rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: transparent;
+            color: var(--crofline-texto);
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .btn-login-mobile i {
+            font-size: 1.2rem;
+        }
+
+        .btn-login-mobile:hover {
+            background: rgba(255, 59, 157, 0.18);
+        }
+
+        /* ===== CONTEÚDO ===== */
 
         #conteudo {
             width: 1600px;
@@ -83,7 +298,7 @@
             user-select: none;
         }
 
-        /* POPUP */
+        /* ===== POPUP LOGIN/CADASTRO ===== */
 
         .popup-cadastro {
             position: fixed;
@@ -295,8 +510,6 @@
             gap: 10px;
         }
 
-        /* CADASTRO 2 ETAPAS */
-
         .form-cadastro {
             height: 100%;
             display: flex;
@@ -354,8 +567,6 @@
             width: 100%;
         }
 
-        /* TOAST / OVERLAY DE SUCESSO */
-
         .cadastro-sucesso-overlay {
             position: fixed;
             inset: 0;
@@ -398,6 +609,27 @@
             color: #166534;
         }
 
+        @media (max-width: 992px) {
+            .brand-crofline {
+                font-size: 1rem;
+                letter-spacing: 0.28em;
+            }
+
+            .menu-categorias-desktop {
+                display: none;
+            }
+        }
+
+        @media (min-width: 993px) {
+            .btn-menu-mobile span {
+                display: inline;
+            }
+
+            .btn-menu-mobile {
+            display: none;
+            }
+        }
+
         @media (max-width: 768px) {
             .popup-cadastro {
                 height: auto;
@@ -425,31 +657,80 @@
         <input type="hidden" name="categoria" id="categoria" />
     </form>
 
-    <header>
-        <nav class="menu-nav">
-            <div class="logo">
-                <img src="/img/logoCrof.png" alt="Logo do Site" height="100px;" />
+    {{-- HEADER / NAV --}}
+    <header class="crofline-header">
+        <nav class="menu-nav-main">
+            {{-- ESQUERDA: logo (desktop) + sanduíche (mobile) --}}
+            <div class="nav-left">
+                <a href="{{ url('/') }}" class="nav-logo-link d-none d-lg-inline-block">
+                    <img src="{{ asset('img/logoCrof.png') }}"
+                         alt="Crofline"
+                         class="brand-logo-desktop">
+                </a>
+
+                <button type="button" class="btn-menu-mobile d-lg-none" id="btn-menu-mobile" aria-label="Abrir menu">
+                    <i class="bi bi-list"></i>
+                    <span class="d-none d-md-inline">MENU</span>
+                </button>
             </div>
 
-            <div class="botoes-nav">
-                <ul>
+            {{-- CENTRO: CROFLINE (mobile) + categorias (desktop) --}}
+            <div class="nav-center">
+                <span class="brand-crofline d-lg-none">CROFLINE</span>
+
+                <ul class="menu-categorias-desktop d-none d-lg-flex">
                     <li onclick="acessarProdutos('Calça')">CALÇAS</li>
                     <li onclick="acessarProdutos('Body')">BODYS</li>
                     <li onclick="acessarProdutos('Cropped')">CROPPED</li>
-                    <li onclick="acessarProdutos('Camiseta')">CAMISETA</li>
+                    <li onclick="acessarProdutos('Camiseta')">CAMISETAS</li>
                     <li onclick="acessarProdutos('Conjunto')">CONJUNTOS</li>
                     <li onclick="acessarProdutos('Vestido')">VESTIDOS</li>
                     <li onclick="acessarProdutos('Acessório')">ACESSÓRIOS</li>
                 </ul>
             </div>
 
-            <div class="login">
-                <i class="bi bi-search-heart-fill fs-3 me-2"></i>
-                <i class="bi bi-bag-heart-fill fs-3 me-2"></i>
-                <i class="bi bi-person-fill fs-3 me-2" id="btn-login"></i>
+            {{-- DIREITA: ícones --}}
+            <div class="nav-right">
+                <div class="nav-icons">
+                    <button type="button" class="nav-icon-btn" aria-label="Buscar">
+                        <i class="bi bi-search-heart-fill"></i>
+                    </button>
+                    <button type="button" class="nav-icon-btn" aria-label="Login">
+                        <i class="bi bi-person-fill" id="btn-login"></i>
+                    </button>
+                    <button type="button" class="nav-icon-btn" aria-label="Carrinho">
+                        <i class="bi bi-bag-heart-fill"></i>
+                    </button>
+                </div>
             </div>
         </nav>
     </header>
+
+    {{-- MENU MOBILE SLIDE --}}
+    <div class="menu-mobile-overlay" id="menu-mobile-overlay"></div>
+    <aside class="menu-mobile" id="menu-mobile">
+        <div class="menu-mobile-header">
+            <span class="menu-mobile-title">Menu</span>
+            <button class="btn-close-menu" id="btn-close-menu" aria-label="Fechar menu">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <ul>
+            <li onclick="acessarProdutos('Calça')"><span>Calças</span></li>
+            <li onclick="acessarProdutos('Body')"><span>Bodys</span></li>
+            <li onclick="acessarProdutos('Cropped')"><span>Cropped</span></li>
+            <li onclick="acessarProdutos('Camiseta')"><span>Camisetas</span></li>
+            <li onclick="acessarProdutos('Conjunto')"><span>Conjuntos</span></li>
+            <li onclick="acessarProdutos('Vestido')"><span>Vestidos</span></li>
+            <li onclick="acessarProdutos('Acessório')"><span>Acessórios</span></li>
+        </ul>
+
+        <button type="button" class="btn-login-mobile" id="btn-login-mobile">
+            <i class="bi bi-person-fill"></i>
+            <span>Login / Cadastro</span>
+        </button>
+    </aside>
 
     {{-- CONTEÚDO --}}
     <div id="conteudo" class="conteudo-principal @if(session('success')) blur @endif">
@@ -561,7 +842,6 @@
         </button>
     </div>
 
-    {{-- OVERLAY DE SUCESSO (via sessão ou Ajax) --}}
     <div id="cadastro-sucesso"
          class="cadastro-sucesso-overlay @if(session('success')) ativo @endif">
         <div class="cadastro-sucesso-card">
@@ -575,8 +855,10 @@
 
     <footer></footer>
 
-        <script>
-        // flag vindo do backend pra saber se está logado
+    {{-- Bootstrap JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
         const CROFLINE_IS_AUTH = @json(auth()->check());
 
         const categoria = document.getElementById('categoria');
@@ -596,8 +878,8 @@
             if (popup && conteudo && toggle && containerPopup) {
                 popup.classList.add('ativo');
                 conteudo.classList.add('blur');
-                toggle.checked = false;            // volta pro texto de cadastro
-                containerPopup.classList.remove('step-2'); // garante etapa 1 e esconde botão voltar
+                toggle.checked = false;
+                containerPopup.classList.remove('step-2');
             }
         }
 
@@ -626,7 +908,7 @@
             }
 
             if (containerPopup) {
-                containerPopup.classList.remove('step-2'); // volta pra etapa 1
+                containerPopup.classList.remove('step-2');
             }
 
             if (toggle) {
@@ -668,11 +950,13 @@
             const containerPopup  = document.getElementById('container-popup');
             const btnContinuar    = document.getElementById('btn-continuar-cadastro');
             const btnVoltarEtapa  = document.getElementById('btn-voltar-etapa');
+            const formLogin       = document.getElementById('form-login');
+            const formCadastro    = document.getElementById('form-cadastro');
 
             if (loginIcon) {
                 loginIcon.addEventListener('click', function () {
                     if (CROFLINE_IS_AUTH) {
-                        alert('Você já está logado. Aqui depois vamos abrir a área do cliente 😉');
+                        alert('Você já está logado. Depois vamos abrir a área do cliente 😉');
                     } else {
                         abrirPopupCadastro();
                     }
@@ -681,18 +965,15 @@
 
             if (toggle && titulo && texto && botao) {
                 toggle.addEventListener('change', () => {
-                    // Sempre que trocar entre login/cadastro, volta pra etapa 1 e esconde botão voltar
                     if (containerPopup) {
                         containerPopup.classList.remove('step-2');
                     }
 
                     if (toggle.checked) {
-                        // Modo LOGIN
                         titulo.textContent = 'Já é cadastrado?';
                         texto.textContent = 'Realize o login';
                         botao.textContent = 'Login';
                     } else {
-                        // Modo CADASTRO
                         titulo.textContent = 'Bem-vindo à Crofline';
                         texto.textContent = 'Cadastre-se para começar';
                         botao.textContent = 'Cadastrar';
@@ -716,8 +997,6 @@
                 });
             }
 
-            // LOGIN (ainda fake)
-            const formLogin = document.getElementById('form-login');
             if (formLogin) {
                 formLogin.addEventListener('submit', function (e) {
                     if (!formLogin.checkValidity()) {
@@ -730,8 +1009,6 @@
                 });
             }
 
-            // ==== CADASTRO COM AJAX ====
-            const formCadastro = document.getElementById('form-cadastro');
             if (formCadastro) {
                 formCadastro.addEventListener('submit', async function (e) {
                     e.preventDefault();
@@ -749,14 +1026,11 @@
                         return;
                     }
 
-                    // Monta os dados
                     const formData = new FormData(formCadastro);
-                    // Campos da etapa 2 (não têm "name", então vamos pegar manualmente)
                     formData.append('sobrenome', document.getElementById('cadastro-sobrenome-2')?.value || '');
                     formData.append('telefone', document.getElementById('cadastro-telefone-2')?.value || '');
                     formData.append('data_nascimento', document.getElementById('cadastro-nascimento-2')?.value || '');
 
-                    // CSRF token
                     const token = document
                         .querySelector('meta[name="csrf-token"]')
                         .getAttribute('content');
@@ -790,7 +1064,6 @@
                         const data = await response.json();
 
                         if (data.success) {
-                            // sucesso
                             mostrarSucessoCadastro();
                         } else {
                             alert(data.message || 'Ocorreu um erro ao cadastrar. Tente novamente.');
@@ -802,95 +1075,40 @@
                     }
                 });
             }
+
+            const btnMenuMobile   = document.getElementById('btn-menu-mobile');
+            const menuMobile      = document.getElementById('menu-mobile');
+            const overlayMenu     = document.getElementById('menu-mobile-overlay');
+            const btnCloseMenu    = document.getElementById('btn-close-menu');
+            const btnLoginMobile  = document.getElementById('btn-login-mobile');
+
+            function abrirMenuMobile() {
+                if (menuMobile) menuMobile.classList.add('aberto');
+                if (overlayMenu) overlayMenu.classList.add('aberto');
+            }
+
+            function fecharMenuMobile() {
+                if (menuMobile) menuMobile.classList.remove('aberto');
+                if (overlayMenu) overlayMenu.classList.remove('aberto');
+            }
+
+            if (btnMenuMobile) {
+                btnMenuMobile.addEventListener('click', abrirMenuMobile);
+            }
+            if (btnCloseMenu) {
+                btnCloseMenu.addEventListener('click', fecharMenuMobile);
+            }
+            if (overlayMenu) {
+                overlayMenu.addEventListener('click', fecharMenuMobile);
+            }
+
+            if (btnLoginMobile) {
+                btnLoginMobile.addEventListener('click', function () {
+                    fecharMenuMobile();
+                    abrirPopupCadastro();
+                });
+            }
         });
-        // ... deixa o resto do script como está
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // já existem essas consts aí em cima, deixa
-        const formCadastro   = document.getElementById('form-cadastro');
-        const containerPopup = document.getElementById('container-popup');
-        const btnContinuar   = document.getElementById('btn-continuar');
-        const btnVoltarEtapa = document.getElementById('btn-voltar-etapa');
-
-        // === CONTINUAR / VOLTAR já estavam OK, mantenho ===
-        if (btnContinuar && containerPopup) {
-            btnContinuar.addEventListener('click', function () {
-                containerPopup.classList.add('step-2');
-            });
-        }
-
-        if (btnVoltarEtapa && containerPopup) {
-            btnVoltarEtapa.addEventListener('click', function () {
-                containerPopup.classList.remove('step-2');
-            });
-        }
-
-        // === SUBMIT DO CADASTRO COM AJAX ===
-        if (formCadastro) {
-            formCadastro.addEventListener('submit', async function (e) {
-                e.preventDefault();
-
-                if (!formCadastro.checkValidity()) {
-                    alert('Por favor, preencha todos os campos corretamente.');
-                    return;
-                }
-
-                const senha     = document.getElementById('cadastro-senha')?.value || '';
-                const confirmar = document.getElementById('cadastro-confirmar-senha-2')?.value || '';
-
-                if (senha !== confirmar) {
-                    alert('As senhas não conferem.');
-                    return;
-                }
-
-                const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                const url   = '{{ route('account.register') }}';
-
-                const formData = new FormData(formCadastro);
-                // garante que o back receba o campo de confirmação
-                formData.set('confirmar_senha', confirmar);
-
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': token,
-                            'Accept': 'application/json',
-                        },
-                        body: formData
-                    });
-
-                    let data;
-                    try {
-                        data = await response.json();
-                    } catch (err) {
-                        console.error('Erro ao ler JSON:', err);
-                        alert('Ocorreu um erro ao cadastrar. Tente novamente.');
-                        return;
-                    }
-
-                    if (response.ok && data.success) {
-                        // mostra overlay de sucesso (3s) – usando a div que já criamos
-                        mostrarSucessoCadastro(); // essa função você já tem no código anterior
-                    } else {
-                        console.error('Erros de validação:', data);
-                        if (data.errors) {
-                            // mostra primeira mensagem de erro
-                            const firstField = Object.keys(data.errors)[0];
-                            alert(data.errors[firstField][0]);
-                        } else if (data.message) {
-                            alert(data.message);
-                        } else {
-                            alert('Ocorreu um erro ao cadastrar. Tente novamente.');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Erro na requisição AJAX:', error);
-                    alert('Ocorreu um erro ao cadastrar. Tente novamente.');
-                }
-            });
-        }
-    });
     </script>
 </body>
 
