@@ -71,13 +71,6 @@
             ];
         }
     }
-
-    // Carrinho da sessão
-    $cartItems = session('cart', []);
-    $cartTotal = 0;
-    foreach ($cartItems as $item) {
-        $cartTotal += $item['total_value'];
-    }
 @endphp
 
 <style>
@@ -380,113 +373,6 @@
         transform: translateY(-1px);
     }
 
-    /* Carrinho popup */
-    .cart-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.55);
-        display: flex;
-        justify-content: flex-end;
-        align-items: stretch;
-        z-index: 9999;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.25s ease;
-    }
-    .cart-overlay.active {
-        opacity: 1;
-        pointer-events: auto;
-    }
-    .cart-drawer {
-        width: 360px;
-        max-width: 100%;
-        background: #1a0730;
-        box-shadow: -6px 0 20px rgba(0, 0, 0, 0.6);
-        transform: translateX(100%);
-        transition: transform 0.25s ease;
-        display: flex;
-        flex-direction: column;
-    }
-    .cart-overlay.active .cart-drawer { transform: translateX(0); }
-
-    .cart-header {
-        padding: 18px 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .cart-header h3 { margin: 0; font-size: 18px; }
-    .cart-close-btn {
-        border: none;
-        background: transparent;
-        color: #fff;
-        font-size: 22px;
-        cursor: pointer;
-    }
-
-    .cart-items {
-        flex: 1;
-        overflow-y: auto;
-        padding: 16px 18px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-    .cart-item {
-        display: grid;
-        grid-template-columns: 64px 1fr;
-        gap: 10px;
-        background: #2a0a46;
-        border-radius: 8px;
-        padding: 8px;
-        align-items: center;
-    }
-    .cart-item img {
-        width: 64px;
-        height: 80px;
-        border-radius: 6px;
-        object-fit: cover;
-    }
-    .cart-item-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-    .cart-item-meta { font-size: 11px; opacity: 0.9; margin-bottom: 2px; }
-    .cart-item-price { font-size: 13px; font-weight: 600; }
-
-    .cart-footer {
-        padding: 14px 18px 18px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .cart-total-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        font-size: 14px;
-    }
-    .cart-primary-btn,
-    .cart-secondary-btn {
-        width: 100%;
-        border-radius: 999px;
-        padding: 9px 16px;
-        border: none;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        font-weight: 600;
-        margin-top: 6px;
-        cursor: pointer;
-    }
-    .cart-primary-btn {
-        background: linear-gradient(90deg, #7b2cbf, #a855f7);
-        color: #fff;
-    }
-    .cart-primary-btn:hover { opacity: 0.95; }
-    .cart-secondary-btn {
-        background: transparent;
-        color: #fff;
-        border: 1px solid #5f2491;
-    }
-    .cart-secondary-btn:hover { background-color: #321150; }
-
     @media (max-width: 900px) {
         .product-grid { grid-template-columns: minmax(0, 1fr); }
     }
@@ -634,56 +520,6 @@
                 </div>
             </div>
 
-        </div>
-    </div>
-
-    {{-- POPUP DO CARRINHO (DRAWER) --}}
-    <div id="cart-overlay" class="cart-overlay">
-        <div class="cart-drawer">
-            <div class="cart-header">
-                <h3>Carrinho</h3>
-                <button type="button" class="cart-close-btn" id="cart-close-btn">&times;</button>
-            </div>
-
-            <div class="cart-items" id="cart-items">
-                @if(count($cartItems) === 0)
-                    <p style="font-size:13px; opacity:0.8;">Seu carrinho está vazio.</p>
-                @else
-                    @foreach($cartItems as $item)
-                        <div class="cart-item">
-                            <img src="{{ asset('img/' . $item['image']) }}" alt="{{ $item['title'] }}">
-                            <div>
-                                <div class="cart-item-title">{{ $item['title'] }}</div>
-                                <div class="cart-item-meta">
-                                    Tamanho: {{ $item['size'] }} &nbsp;|&nbsp;
-                                    Cor: {{ $item['color'] }}
-                                </div>
-                                <div class="cart-item-meta">
-                                    Quantidade: {{ $item['quantity'] }}
-                                </div>
-                                <div class="cart-item-price">
-                                    R$ {{ number_format($item['total_value'], 2, ',', '.') }}
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                @endif
-            </div>
-
-            <div class="cart-footer">
-                <div class="cart-total-row">
-                    <span>Total</span>
-                    <span id="cart-total">
-                        R$ {{ number_format($cartTotal, 2, ',', '.') }}
-                    </span>
-                </div>
-                <button type="button" class="cart-primary-btn" id="cart-checkout">
-                    Finalizar compra
-                </button>
-                <button type="button" class="cart-secondary-btn" id="cart-continue">
-                    Continuar comprando
-                </button>
-            </div>
         </div>
     </div>
 </section>
@@ -842,46 +678,6 @@ document.addEventListener('DOMContentLoaded', function () {
             formAddCart.submit();
         });
     }
-
-    // ===== CARRINHO POPUP =====
-    const cartOverlay  = document.getElementById('cart-overlay');
-    const cartCloseBtn = document.getElementById('cart-close-btn');
-    const cartContinue = document.getElementById('cart-continue');
-    const cartCheckout = document.getElementById('cart-checkout');
-
-    function openCart() {
-        if (cartOverlay) cartOverlay.classList.add('active');
-    }
-    function closeCart() {
-        if (cartOverlay) cartOverlay.classList.remove('active');
-    }
-
-    if (cartCloseBtn) cartCloseBtn.addEventListener('click', closeCart);
-    if (cartContinue) cartContinue.addEventListener('click', closeCart);
-    if (cartOverlay) {
-        cartOverlay.addEventListener('click', (e) => {
-            if (e.target === cartOverlay) closeCart();
-        });
-    }
-
-    if (cartCheckout) {
-        cartCheckout.addEventListener('click', () => {
-            // Futuramente redireciona pra página de resumo da compra
-            alert('Aqui depois vocês redirecionam para a página de resumo da compra.');
-        });
-    }
-
-    @if(session('cart_open') || session('cart_success'))
-        openCart();
-    @endif
-
-    @if(session('cart_success'))
-        alert(@json(session('cart_success')));
-    @endif
-
-    @if(session('cart_error'))
-        alert(@json(session('cart_error')));
-    @endif
 });
 </script>
 

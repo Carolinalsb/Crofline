@@ -16,6 +16,8 @@ Route::get('/product/show/{id}', [ProductController::class, 'show'])->name('prod
 
 //Rota Account Controller
 Route::post('/account/register', [AccountController::class, 'register'])->name('account.register');
+Route::post('/login', [AccountController::class, 'login'])->name('account.login');
+Route::get('/logout', [AccountController::class, 'logout'])->name('account.logout');
 
 //Cart Controller
 Route::post('/cart/add', [CartController::class, 'addToCart'])->name('cart.add');

@@ -609,6 +609,267 @@
             color: #166534;
         }
 
+        /* ===== CARRINHO POPUP GLOBAL (DRAWER) ===== */
+
+        .cart-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: flex;
+            justify-content: flex-end;
+            align-items: stretch;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .cart-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .cart-drawer {
+            width: 360px;
+            max-width: 100%;
+            background: #1a0730;
+            box-shadow: -6px 0 20px rgba(0, 0, 0, 0.6);
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-overlay.active .cart-drawer {
+            transform: translateX(0);
+        }
+
+        .cart-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cart-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .cart-close-btn {
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 64px 1fr;
+            gap: 10px;
+            background: #2a0a46;
+            border-radius: 8px;
+            padding: 8px;
+            align-items: center;
+        }
+
+        .cart-item img {
+            width: 64px;
+            height: 80px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .cart-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .cart-item-meta {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-bottom: 2px;
+        }
+
+        .cart-item-price {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .cart-footer {
+            padding: 14px 18px 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .cart-primary-btn,
+        .cart-secondary-btn {
+            width: 100%;
+            border-radius: 999px;
+            padding: 9px 16px;
+            border: none;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+            margin-top: 6px;
+            cursor: pointer;
+        }
+
+        .cart-primary-btn {
+            background: linear-gradient(90deg, #7b2cbf, #a855f7);
+            color: #fff;
+        }
+
+        .cart-primary-btn:hover {
+            opacity: 0.95;
+        }
+
+        .cart-secondary-btn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid #5f2491;
+        }
+
+        .cart-secondary-btn:hover {
+            background-color: #321150;
+        }
+
+        /* ===== POPUP CONTA DO USUÁRIO (LOGADO) ===== */
+
+        .user-popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3500;
+        }
+
+        .user-popup-overlay.ativo {
+            display: flex;
+        }
+
+        .user-popup-card {
+            background: radial-gradient(circle at top, #4b1b7a, #24034d 60%);
+            border-radius: 20px;
+            padding: 24px 26px;
+            min-width: 280px;
+            max-width: 360px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+            color: #f9f5ff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .user-popup-card::before {
+            content: '';
+            position: absolute;
+            inset: -40%;
+            background:
+                radial-gradient(circle at 10% 0, rgba(255, 59, 157, 0.25), transparent 55%),
+                radial-gradient(circle at 100% 100%, rgba(111, 66, 193, 0.35), transparent 55%);
+            opacity: 0.55;
+            pointer-events: none;
+        }
+
+        .user-popup-header {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .user-popup-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+        }
+
+        .user-popup-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .user-popup-header span {
+            font-size: 0.83rem;
+            opacity: 0.86;
+        }
+
+        .user-popup-close-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            border: none;
+            background: transparent;
+            color: #f9f5ff;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .user-popup-actions {
+            position: relative;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .user-popup-btn {
+            width: 100%;
+            border-radius: 999px;
+            border: 1px solid rgba(248, 250, 252, 0.2);
+            background: rgba(15, 23, 42, 0.35);
+            color: #f9f5ff;
+            padding: 9px 14px;
+            font-size: 0.86rem;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .user-popup-btn.primary {
+            border-color: transparent;
+            background: linear-gradient(90deg, #ff3b9d, #a855f7);
+        }
+
+        .user-popup-btn:hover {
+            filter: brightness(1.05);
+        }
+
+        .user-popup-btn i {
+            font-size: 1rem;
+        }
+
         @media (max-width: 992px) {
             .brand-crofline {
                 font-size: 1rem;
@@ -626,7 +887,7 @@
             }
 
             .btn-menu-mobile {
-            display: none;
+                display: none;
             }
         }
 
@@ -651,6 +912,18 @@
 </head>
 
 <body>
+    @php
+        $cartItems = session('cart', []);
+        $cartTotal = 0;
+        foreach ($cartItems as $item) {
+            $cartTotal += $item['total_value'];
+        }
+
+        $userId = session('user_id');
+        $userName = session('user_name');
+        $userEmail = session('user_email');
+    @endphp
+
     {{-- FORM PARA ENVIAR CATEGORIA --}}
     <form method="POST" action="{{ route('product.produtos') }}" id="formulario">
         @csrf
@@ -698,7 +971,12 @@
                     <button type="button" class="nav-icon-btn" aria-label="Login">
                         <i class="bi bi-person-fill" id="btn-login"></i>
                     </button>
-                    <button type="button" class="nav-icon-btn" aria-label="Carrinho">
+                    <button
+                        type="button"
+                        class="nav-icon-btn"
+                        aria-label="Carrinho"
+                        id="btn-cart"
+                    >
                         <i class="bi bi-bag-heart-fill"></i>
                     </button>
                 </div>
@@ -737,6 +1015,87 @@
         @yield('content')
     </div>
 
+    {{-- CARRINHO GLOBAL (DRAWER) --}}
+    <div id="cart-overlay" class="cart-overlay">
+        <div class="cart-drawer">
+            <div class="cart-header">
+                <h3>Carrinho</h3>
+                <button type="button" class="cart-close-btn" id="cart-close-btn">&times;</button>
+            </div>
+
+            <div class="cart-items" id="cart-items">
+                @if(count($cartItems) === 0)
+                    <p style="font-size:13px; opacity:0.8;">Seu carrinho está vazio.</p>
+                @else
+                    @foreach($cartItems as $item)
+                        <div class="cart-item">
+                            <img src="{{ asset('img/' . $item['image']) }}" alt="{{ $item['title'] }}">
+                            <div>
+                                <div class="cart-item-title">{{ $item['title'] }}</div>
+                                <div class="cart-item-meta">
+                                    Tamanho: {{ $item['size'] }} &nbsp;|&nbsp;
+                                    Cor: {{ $item['color'] }}
+                                </div>
+                                <div class="cart-item-meta">
+                                    Quantidade: {{ $item['quantity'] }}
+                                </div>
+                                <div class="cart-item-price">
+                                    R$ {{ number_format($item['total_value'], 2, ',', '.') }}
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
+            </div>
+
+            <div class="cart-footer">
+                <div class="cart-total-row">
+                    <span>Total</span>
+                    <span id="cart-total">
+                        R$ {{ number_format($cartTotal, 2, ',', '.') }}
+                    </span>
+                </div>
+                <button type="button" class="cart-primary-btn" id="cart-checkout">
+                    Finalizar compra
+                </button>
+                <button type="button" class="cart-secondary-btn" id="cart-continue">
+                    Continuar comprando
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- POPUP CONTA DO USUÁRIO (QUANDO LOGADO) --}}
+    <div id="user-popup-overlay" class="user-popup-overlay">
+        <div class="user-popup-card">
+            <div class="user-popup-header">
+                <div class="user-popup-avatar">
+                    <i class="bi bi-person-heart"></i>
+                </div>
+                <div>
+                    <h3>{{ $userName ?? 'Usuário Crofline' }}</h3>
+                    <span>{{ $userEmail ?? '' }}</span>
+                </div>
+
+                <button type="button" id="user-popup-close" class="user-popup-close-btn" aria-label="Fechar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="user-popup-actions">
+                <button type="button" class="user-popup-btn primary" id="user-popup-manage">
+                    <i class="bi bi-gear-fill"></i>
+                    GERENCIAR CONTA
+                </button>
+
+                <a href="{{ route('account.logout') }}"><button type="button" class="user-popup-btn" id="user-popup-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    SAIR
+                </button></a>
+            </div>
+        </div>
+    </div>
+
     {{-- POP-UP LOGIN/CADASTRO --}}
     <div id="popup-cadastro" class="popup-cadastro">
         <input type="checkbox" id="toggle">
@@ -753,12 +1112,20 @@
 
                     <div class="campo-input">
                         <i class="bi bi-envelope"></i>
-                        <input type="email" id="login-email" placeholder="Digite seu e-mail" required>
+                        <input type="email"
+                               id="login-email"
+                               name="email"
+                               placeholder="Digite seu e-mail"
+                               required>
                     </div>
 
                     <div class="campo-input">
                         <i class="bi bi-lock"></i>
-                        <input type="password" id="login-senha" placeholder="Digite sua senha" required>
+                        <input type="password"
+                               id="login-senha"
+                               name="senha"
+                               placeholder="Digite sua senha"
+                               required>
                     </div>
 
                     <button type="submit">Entrar</button>
@@ -858,9 +1225,23 @@
     {{-- Bootstrap JS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+    {{-- Variáveis globais --}}
     <script>
         const CROFLINE_IS_AUTH = @json(auth()->check());
 
+        window.CROFLINE_CART_OPEN = @json(session('cart_open') || session('cart_success'));
+        window.CROFLINE_CART_SUCCESS_MESSAGE = @json(session('cart_success'));
+        window.CROFLINE_CART_ERROR_MESSAGE   = @json(session('cart_error'));
+
+        const CROFLINE_USER_ID    = @json($userId);
+        const CROFLINE_USER_NAME  = @json($userName);
+        const CROFLINE_USER_EMAIL = @json($userEmail);
+    </script>
+
+    {{-- JS externo do carrinho --}}
+    <script src="{{ asset('js/cart.js') }}"></script>
+
+    <script>
         const categoria = document.getElementById('categoria');
         const formulario = document.getElementById('formulario');
 
@@ -934,10 +1315,31 @@
                     clearInterval(intervalo);
                     overlay.classList.remove('ativo');
                     fecharPopupCadastro();
+                    window.location.reload();
                 } else {
                     textoContador.textContent = `Fechando em ${contador}...`;
                 }
             }, 1000);
+        }
+
+        function abrirPopupConta() {
+            const overlay = document.getElementById('user-popup-overlay');
+            const conteudo = document.querySelector('.conteudo-principal');
+
+            if (overlay && conteudo) {
+                overlay.classList.add('ativo');
+                conteudo.classList.add('blur');
+            }
+        }
+
+        function fecharPopupConta() {
+            const overlay = document.getElementById('user-popup-overlay');
+            const conteudo = document.querySelector('.conteudo-principal');
+
+            if (overlay && conteudo) {
+                overlay.classList.remove('ativo');
+                conteudo.classList.remove('blur');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -953,13 +1355,44 @@
             const formLogin       = document.getElementById('form-login');
             const formCadastro    = document.getElementById('form-cadastro');
 
+            const userPopupOverlay = document.getElementById('user-popup-overlay');
+            const userPopupClose   = document.getElementById('user-popup-close');
+            const userPopupLogout  = document.getElementById('user-popup-logout');
+            const userPopupManage  = document.getElementById('user-popup-manage');
+
             if (loginIcon) {
                 loginIcon.addEventListener('click', function () {
-                    if (CROFLINE_IS_AUTH) {
-                        alert('Você já está logado. Depois vamos abrir a área do cliente 😉');
+                    if (CROFLINE_USER_ID) {
+                        abrirPopupConta();
                     } else {
                         abrirPopupCadastro();
                     }
+                });
+            }
+
+            if (userPopupOverlay) {
+                userPopupOverlay.addEventListener('click', function (e) {
+                    if (e.target === userPopupOverlay) {
+                        fecharPopupConta();
+                    }
+                });
+            }
+
+            if (userPopupClose) {
+                userPopupClose.addEventListener('click', fecharPopupConta);
+            }
+
+            if (userPopupLogout) {
+                userPopupLogout.addEventListener('click', function () {
+                    // aqui você liga depois na sua rota de logout
+                    // por enquanto só fecha e mostra mensagem
+                    fecharPopupConta();
+                });
+            }
+
+            if (userPopupManage) {
+                userPopupManage.addEventListener('click', function () {
+                    // aqui você pode redirecionar pra página "minha conta" depois
                 });
             }
 
@@ -998,13 +1431,58 @@
             }
 
             if (formLogin) {
-                formLogin.addEventListener('submit', function (e) {
+                formLogin.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
                     if (!formLogin.checkValidity()) {
-                        e.preventDefault();
                         alert('Por favor, preencha todos os campos corretamente.');
-                    } else {
-                        e.preventDefault();
-                        alert('Login: aqui entra a lógica do backend.');
+                        return;
+                    }
+
+                    const formData = new FormData(formLogin);
+                    const token = document
+                        .querySelector('meta[name="csrf-token"]')
+                        .getAttribute('content');
+
+                    formData.append('_token', token);
+
+                    try {
+                        const response = await fetch("{{ route('account.login') }}", {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        });
+
+                        const data = await response.json().catch(() => ({}));
+
+                        if (response.status === 422) {
+                            if (data.errors) {
+                                let msg = 'Erro ao fazer login:\n';
+                                for (const field in data.errors) {
+                                    msg += '- ' + data.errors[field].join('\n- ') + '\n';
+                                }
+                                alert(msg);
+                            } else if (data.message) {
+                                alert(data.message);
+                            } else {
+                                alert('Dados de login inválidos.');
+                            }
+                            return;
+                        }
+
+                        if (!response.ok || !data.success) {
+                            alert(data.message || 'Ocorreu um erro ao fazer login. Tente novamente.');
+                            return;
+                        }
+
+                        alert(data.message || 'Login realizado com sucesso!');
+                        window.location.reload();
+
+                    } catch (error) {
+                        console.error(error);
+                        alert('Ocorreu um erro ao fazer login. Tente novamente.');
                     }
                 });
             }
@@ -1105,7 +1583,11 @@
             if (btnLoginMobile) {
                 btnLoginMobile.addEventListener('click', function () {
                     fecharMenuMobile();
-                    abrirPopupCadastro();
+                    if (CROFLINE_USER_ID) {
+                        abrirPopupConta();
+                    } else {
+                        abrirPopupCadastro();
+                    }
                 });
             }
         });
