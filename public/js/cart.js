@@ -1,12 +1,12 @@
 // public/js/cart.js
 (function () {
     function setupCart() {
-        var cartOverlay   = document.getElementById('cart-overlay');
+        var cartOverlay = document.getElementById('cart-overlay');
         if (!cartOverlay) return; // se a página não tiver carrinho, ignora
 
-        var cartCloseBtn  = document.getElementById('cart-close-btn');
-        var cartContinue  = document.getElementById('cart-continue');
-        var cartCheckout  = document.getElementById('cart-checkout');
+        var cartCloseBtn = document.getElementById('cart-close-btn');
+        var cartContinue = document.getElementById('cart-continue');
+        var cartCheckout = document.getElementById('cart-checkout');
         var cartToggleBtn = document.getElementById('btn-cart');
 
         function openCart() {
@@ -48,7 +48,7 @@
         // Checkout – placeholder por enquanto
         if (cartCheckout) {
             cartCheckout.addEventListener('click', function () {
-                alert('Aqui depois vocês redirecionam para a página de resumo da compra.');
+                window.location.href = "/product/resumo";
             });
         }
 

@@ -60,4 +60,24 @@ class CartController extends Controller
             'cart_open'    => true,
         ]);
     }
+
+    /**
+     * Remove um item específico do carrinho (pela chave da sessão).
+     */
+    public function removeItem(Request $request)
+    {
+        $key = $request->input('key');
+
+        $cart = session()->get('cart', []);
+
+        if (isset($cart[$key])) {
+            unset($cart[$key]);
+            session()->put('cart', $cart);
+        }
+
+        return back()->with('cart_open', true);
+    }
+
+   
+    
 }

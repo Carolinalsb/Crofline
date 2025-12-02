@@ -25,7 +25,8 @@
 
         body {
             margin: 0;
-            padding-top: 5.5rem; /* espaço pro header fixo */
+            padding-top: 5.5rem;
+            /* espaço pro header fixo */
             background-color: var(--crofline-roxo-fundo);
             color: var(--crofline-texto);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -676,7 +677,7 @@
 
         .cart-item {
             display: grid;
-            grid-template-columns: 64px 1fr;
+            grid-template-columns: 24px 64px 1fr;
             gap: 10px;
             background: #2a0a46;
             border-radius: 8px;
@@ -1015,6 +1016,11 @@
         @yield('content')
     </div>
 
+    {{-- FORM GLOBAL PARA ENVIAR ITENS SELECIONADOS PRO RESUMO --}}
+    <form id="cart-resumo-form" method="POST" action="{{ route('product.resumo') }}">
+        @csrf
+    </form>
+
     {{-- CARRINHO GLOBAL (DRAWER) --}}
     <div id="cart-overlay" class="cart-overlay">
         <div class="cart-drawer">
@@ -1027,9 +1033,21 @@
                 @if(count($cartItems) === 0)
                     <p style="font-size:13px; opacity:0.8;">Seu carrinho está vazio.</p>
                 @else
-                    @foreach($cartItems as $item)
+                    @foreach($cartItems as $key => $item)
                         <div class="cart-item">
+                            {{-- coluna 1: checkbox --}}
+                            <div class="d-flex justify-content-center">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       name="selected_items[]"
+                                       value="{{ $key }}"
+                                       form="cart-resumo-form">
+                            </div>
+
+                            {{-- coluna 2: imagem --}}
                             <img src="{{ asset('img/' . $item['image']) }}" alt="{{ $item['title'] }}">
+
+                            {{-- coluna 3: infos + preço + remover --}}
                             <div>
                                 <div class="cart-item-title">{{ $item['title'] }}</div>
                                 <div class="cart-item-meta">
@@ -1039,11 +1057,27 @@
                                 <div class="cart-item-meta">
                                     Quantidade: {{ $item['quantity'] }}
                                 </div>
-                                <div class="cart-item-price">
-                                    R$ {{ number_format($item['total_value'], 2, ',', '.') }}
+
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <div class="cart-item-price">
+                                        R$ {{ number_format($item['total_value'], 2, ',', '.') }}
+                                    </div>
+
+                                    <button type="submit"
+                                            form="cart-remove-{{ $key }}"
+                                            class="btn btn-link p-0"
+                                            style="font-size:11px;color:#ff9b9b;text-decoration:underline;">
+                                        remover
+                                    </button>
                                 </div>
                             </div>
                         </div>
+
+                        {{-- form escondido pra remover esse item --}}
+                        <form id="cart-remove-{{ $key }}" method="POST" action="{{ route('cart.remove') }}" style="display:none;">
+                            @csrf
+                            <input type="hidden" name="key" value="{{ $key }}">
+                        </form>
                     @endforeach
                 @endif
             </div>
@@ -1055,7 +1089,11 @@
                         R$ {{ number_format($cartTotal, 2, ',', '.') }}
                     </span>
                 </div>
-                <button type="button" class="cart-primary-btn" id="cart-checkout">
+                {{-- envia apenas itens selecionados para a view de resumoCompra --}}
+                <button type="submit"
+                        class="cart-primary-btn"
+                        id="cart-checkout"
+                        form="cart-resumo-form">
                     Finalizar compra
                 </button>
                 <button type="button" class="cart-secondary-btn" id="cart-continue">
@@ -1384,15 +1422,13 @@
 
             if (userPopupLogout) {
                 userPopupLogout.addEventListener('click', function () {
-                    // aqui você liga depois na sua rota de logout
-                    // por enquanto só fecha e mostra mensagem
                     fecharPopupConta();
                 });
             }
 
             if (userPopupManage) {
                 userPopupManage.addEventListener('click', function () {
-                    // aqui você pode redirecionar pra página "minha conta" depois
+                    // futura página "minha conta"
                 });
             }
 

@@ -21,4 +21,30 @@ class ProductController extends Controller{
         ->first();    
         return view('product.show', compact('produto'));
     }
+
+    public function resumo(Request $request)
+    {
+        $selectedKeys = $request->input('selected_items', []);
+
+        $cart = session()->get('cart', []);
+        $itemsSelecionados = [];
+
+        foreach ($selectedKeys as $key) {
+            if (isset($cart[$key])) {
+                $itemsSelecionados[$key] = $cart[$key];
+            }
+        }
+
+        // Se não selecionou nada, volta pro carrinho
+        if (empty($itemsSelecionados)) {
+            return back()->with([
+                'cart_error' => 'Selecione ao menos um produto para continuar.',
+                'cart_open'  => true,
+            ]);
+        }
+
+        return view('product.resumo', [
+            'items' => $itemsSelecionados,
+        ]);
+    }
 }
