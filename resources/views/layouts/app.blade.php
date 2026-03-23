@@ -17,6 +17,9 @@
             --crofline-roxo-fundo: #321150;
             --crofline-rosa: #ff3b9d;
             --crofline-texto: #f2f2f2;
+            --crofline-header-altura: 4.45rem;
+            --crofline-header-bg-scroll: rgba(36, 3, 77, 0.78);
+            --crofline-header-borda: rgba(255, 255, 255, 0.06);
         }
 
         * {
@@ -25,8 +28,7 @@
 
         body {
             margin: 0;
-            padding-top: 5.5rem;
-            /* espaço pro header fixo */
+            padding-top: var(--crofline-header-altura);
             background-color: var(--crofline-roxo-fundo);
             color: var(--crofline-texto);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -46,10 +48,24 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 1.5rem;
-            height: 5.5rem;
-            background: rgba(36, 3, 77, 0.88);
+            padding: 0 1.2rem;
+            height: var(--crofline-header-altura);
+            background: transparent;
+            border-bottom: 1px solid transparent;
+            transition:
+                background-color 0.28s ease,
+                backdrop-filter 0.28s ease,
+                border-color 0.28s ease,
+                height 0.28s ease,
+                box-shadow 0.28s ease;
+        }
+
+        .menu-nav-main.nav-scrolled {
+            background: var(--crofline-header-bg-scroll);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--crofline-header-borda);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.16);
         }
 
         .nav-left,
@@ -77,7 +93,7 @@
             outline: none;
             background: transparent;
             color: var(--crofline-texto);
-            font-size: 1.8rem;
+            font-size: 1.55rem;
             display: flex;
             align-items: center;
             cursor: pointer;
@@ -85,14 +101,14 @@
         }
 
         .btn-menu-mobile span {
-            font-size: 0.8rem;
+            font-size: 0.72rem;
             letter-spacing: 0.18em;
             margin-left: 0.25rem;
         }
 
         .brand-crofline {
-            letter-spacing: 0.4em;
-            font-size: 1.2rem;
+            letter-spacing: 0.38em;
+            font-size: 0.92rem;
             color: var(--crofline-texto);
             text-transform: uppercase;
             text-align: center;
@@ -108,15 +124,15 @@
         }
 
         .brand-logo-desktop {
-            height: 8rem;
+            height: 4.85rem;
             width: auto;
             display: block;
-            transition: transform 0.2s ease, filter 0.2s ease;
+            transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
         }
 
         .brand-logo-desktop:hover {
-            transform: scale(1.06);
-            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+            transform: scale(1.03);
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
         }
 
         .nav-icons {
@@ -130,12 +146,13 @@
             outline: none;
             background: transparent;
             color: var(--crofline-texto);
-            font-size: 1.5rem;
+            font-size: 1.28rem;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: transform 0.15s ease, color 0.15s ease;
+            transition: transform 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+            padding: 0;
         }
 
         .nav-icon-btn:hover {
@@ -148,11 +165,11 @@
         .menu-categorias-desktop {
             list-style: none;
             display: flex;
-            gap: 3rem;
+            gap: 2.25rem;
             margin: 0;
             padding: 0;
-            font-size: 0.9rem;
-            letter-spacing: 0.08em;
+            font-size: 0.80rem;
+            letter-spacing: 0.12em;
         }
 
         .menu-categorias-desktop li {
@@ -160,22 +177,27 @@
             cursor: pointer;
             text-transform: uppercase;
             color: var(--crofline-texto);
+            padding: 0.18rem 0 0.42rem 0;
+            transition: color 0.22s ease, opacity 0.22s ease;
         }
 
         .menu-categorias-desktop li::after {
             content: '';
             position: absolute;
-            left: 50%;
-            bottom: -6px;
-            width: 0;
+            left: 0;
+            bottom: 0;
             height: 2px;
+            width: 16px;
             background: var(--crofline-rosa);
-            transform: translateX(-50%);
-            transition: width 0.25s ease;
+            transition: width 0.22s ease;
+        }
+
+        .menu-categorias-desktop li:hover {
+            color: #ffffff;
         }
 
         .menu-categorias-desktop li:hover::after {
-            width: 50%;
+            width: 28px;
         }
 
         /* ===== MENU MOBILE (SLIDE LEFT) ===== */
@@ -873,7 +895,7 @@
 
         @media (max-width: 992px) {
             .brand-crofline {
-                font-size: 1rem;
+                font-size: 0.95rem;
                 letter-spacing: 0.28em;
             }
 
@@ -893,6 +915,10 @@
         }
 
         @media (max-width: 768px) {
+            :root {
+                --crofline-header-altura: 4rem;
+            }
+
             .popup-cadastro {
                 height: auto;
             }
@@ -907,6 +933,10 @@
 
             .grid-cadastro {
                 grid-template-columns: 1fr;
+            }
+
+            .brand-logo-desktop {
+                height: 4.2rem;
             }
         }
     </style>
@@ -933,7 +963,7 @@
 
     {{-- HEADER / NAV --}}
     <header class="crofline-header">
-        <nav class="menu-nav-main">
+        <nav class="menu-nav-main" id="menu-nav-main">
             {{-- ESQUERDA: logo (desktop) + sanduíche (mobile) --}}
             <div class="nav-left">
                 <a href="{{ url('/') }}" class="nav-logo-link d-none d-lg-inline-block">
@@ -1035,7 +1065,6 @@
                 @else
                     @foreach($cartItems as $key => $item)
                         <div class="cart-item">
-                            {{-- coluna 1: checkbox --}}
                             <div class="d-flex justify-content-center">
                                 <input type="checkbox"
                                        class="form-check-input"
@@ -1044,10 +1073,8 @@
                                        form="cart-resumo-form">
                             </div>
 
-                            {{-- coluna 2: imagem --}}
                             <img src="{{ asset('img/' . $item['image']) }}" alt="{{ $item['title'] }}">
 
-                            {{-- coluna 3: infos + preço + remover --}}
                             <div>
                                 <div class="cart-item-title">{{ $item['title'] }}</div>
                                 <div class="cart-item-meta">
@@ -1073,7 +1100,6 @@
                             </div>
                         </div>
 
-                        {{-- form escondido pra remover esse item --}}
                         <form id="cart-remove-{{ $key }}" method="POST" action="{{ route('cart.remove') }}" style="display:none;">
                             @csrf
                             <input type="hidden" name="key" value="{{ $key }}">
@@ -1089,7 +1115,6 @@
                         R$ {{ number_format($cartTotal, 2, ',', '.') }}
                     </span>
                 </div>
-                {{-- envia apenas itens selecionados para a view de resumoCompra --}}
                 <button type="submit"
                         class="cart-primary-btn"
                         id="cart-checkout"
@@ -1260,10 +1285,8 @@
 
     <footer></footer>
 
-    {{-- Bootstrap JS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    {{-- Variáveis globais --}}
     <script>
         const CROFLINE_IS_AUTH = @json(auth()->check());
 
@@ -1276,7 +1299,6 @@
         const CROFLINE_USER_EMAIL = @json($userEmail);
     </script>
 
-    {{-- JS externo do carrinho --}}
     <script src="{{ asset('js/cart.js') }}"></script>
 
     <script>
@@ -1380,6 +1402,17 @@
             }
         }
 
+        function atualizarHeaderScroll() {
+            const nav = document.getElementById('menu-nav-main');
+            if (!nav) return;
+
+            if (window.scrollY > 16) {
+                nav.classList.add('nav-scrolled');
+            } else {
+                nav.classList.remove('nav-scrolled');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const loginIcon       = document.getElementById('btn-login');
             const toggle          = document.getElementById('toggle');
@@ -1397,6 +1430,9 @@
             const userPopupClose   = document.getElementById('user-popup-close');
             const userPopupLogout  = document.getElementById('user-popup-logout');
             const userPopupManage  = document.getElementById('user-popup-manage');
+
+            atualizarHeaderScroll();
+            window.addEventListener('scroll', atualizarHeaderScroll);
 
             if (loginIcon) {
                 loginIcon.addEventListener('click', function () {
