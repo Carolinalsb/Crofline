@@ -1,24 +1,30 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class ProductController extends Controller{
-    public function produtos(Request $request){
+class ProductController extends Controller
+{
+    public function produtos(Request $request)
+    {
         $dados = DB::table('produtos')
-        ->select('*')
-        ->where('categorias', $request->input('categoria'))
-        ->get();
+            ->select('*')
+            ->where('categorias', $request->input('categoria'))
+            ->get();
 
         return view('product.produtos', compact('dados'));
     }
-    public function show($id){
+
+    public function show($id)
+    {
         $produto = DB::table('produtos')
-        ->select('*')
-        ->where('id', $id)
-        ->first();    
+            ->select('*')
+            ->where('id', $id)
+            ->first();
+
         return view('product.show', compact('produto'));
     }
 
@@ -35,7 +41,6 @@ class ProductController extends Controller{
             }
         }
 
-        // Se não selecionou nada, volta pro carrinho
         if (empty($itemsSelecionados)) {
             return back()->with([
                 'cart_error' => 'Selecione ao menos um produto para continuar.',

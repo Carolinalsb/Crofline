@@ -5,389 +5,575 @@
 @section('content')
 
 @php
-    // Imagens
-    $imagens = array_filter([
-        $produto->imagem  ? asset('img/' . $produto->imagem)  : null,
-        $produto->imagem2 ? asset('img/' . $produto->imagem2) : null,
-        $produto->imagem3 ? asset('img/' . $produto->imagem3) : null,
-    ]);
-
-    // Decodifica cores no formato:
-    // [
-    //   {"cor":"marrom","quantidade":5},
-    //   {"cor":"azul","quantidade":10}
-    // ]
-    $coresBrutas = json_decode($produto->cores ?? '[]', true) ?: [];
-
     $mapaCores = [
-        'preto'          => '#000000',
-        'cinza'          => '#808080',
-        'marrom'         => '#8B4513',
-        'azul'           => '#1E90FF',
-        'rosa'           => '#FF6FB5',
-        'roxo'           => '#7B2CBF',
-        'branco'         => '#FFFFFF',
-        'bege'           => '#F5DEB3',
-        'verde'          => '#32CD32',
-        'nude'           => '#D2B48C',
-        'marsala'        => '#964F4C',
-        'marçala'        => '#964F4C',
-        'off white'      => '#F8F5F0',
-        'rosa claro'     => '#FFC0CB',
-        'rosa choque'    => '#FF1493',
-        'lilás'          => '#C8A2C8',
-        'laranja'        => '#FFA500',
-        'mostarda'       => '#FFDB58',
-        'terracota'      => '#E2725B',
-        'verde musgo'    => '#556B2F',
-        'verde bandeira' => '#008000',
-        'azul marinho'   => '#001F3F',
-        'azul royal'     => '#4169E1',
-        'jeans claro'    => '#7EA0B7',
-        'vinho'          => '#722F37',
-        'caramelo'       => '#AF6E4D',
+        'preto'            => '#000000',
+        'cinza'            => '#808080',
+        'marrom'           => '#8B4513',
+        'azul'             => '#1E90FF',
+        'rosa'             => '#FF6FB5',
+        'roxo'             => '#7B2CBF',
+        'branco'           => '#FFFFFF',
+        'bege'             => '#F5DEB3',
+        'verde'            => '#32CD32',
+        'nude'             => '#D2B48C',
+        'marsala'          => '#964F4C',
+        'marçala'          => '#964F4C',
+        'off white'        => '#F8F5F0',
+        'rosa claro'       => '#FFC0CB',
+        'rosa choque'      => '#FF1493',
+        'lilás'            => '#C8A2C8',
+        'laranja'          => '#FFA500',
+        'mostarda'         => '#FFDB58',
+        'terracota'        => '#E2725B',
+        'verde musgo'      => '#556B2F',
+        'verde bandeira'   => '#008000',
+        'verde oliva'      => '#6B8E23',
+        'verde esmeralda'  => '#50C878',
+        'azul marinho'     => '#001F3F',
+        'azul royal'       => '#4169E1',
+        'jeans claro'      => '#7EA0B7',
+        'vinho'            => '#722F37',
+        'caramelo'         => '#AF6E4D',
+        'lavanda'          => '#B57EDC',
+        'grafite'          => '#41424C',
+        'amarelo manteiga' => '#F3E5AB',
+        'vermelho'         => '#C1121F',
     ];
 
-    $cores = [];
+    $imagens = [];
+    $imagemRaw = $produto->imagem ?? null;
 
-    foreach ($coresBrutas as $c) {
-        if (is_string($c)) {
-            $nomeCor = trim($c);
-            $nomeKey = mb_strtolower($nomeCor);
-            $cores[] = [
-                'nome'       => $nomeCor,
-                'cor'        => $mapaCores[$nomeKey] ?? '#CCCCCC',
-                'quantidade' => null,
-            ];
-        } elseif (is_array($c) && isset($c['cor'])) {
-            $nomeCor   = trim($c['cor']);
-            $nomeKey   = mb_strtolower($nomeCor);
-            $quantidade = isset($c['quantidade']) ? (int) $c['quantidade'] : null;
+    if (!empty($imagemRaw)) {
+        $imagemJson = json_decode($imagemRaw, true);
 
-            $cores[] = [
-                'nome'       => $nomeCor,
-                'cor'        => $mapaCores[$nomeKey] ?? '#CCCCCC',
-                'quantidade' => $quantidade,
-            ];
+        if (json_last_error() === JSON_ERROR_NONE && is_array($imagemJson)) {
+            foreach ($imagemJson as $itemImagem) {
+                if (is_array($itemImagem) && !empty($itemImagem['imagem'])) {
+                    $imagens[] = asset('img/' . $itemImagem['imagem']);
+                } elseif (is_string($itemImagem) && !empty($itemImagem)) {
+                    $imagens[] = asset('img/' . $itemImagem);
+                }
+            }
+        } else {
+            $imagens[] = asset('img/' . $imagemRaw);
         }
     }
+
+    if (empty($imagens)) {
+        $imagens[] = asset('img/sem-imagem.png');
+    }
+
+    $detalhesBrutos = json_decode($produto->qtd_detalhes ?? '[]', true);
+    $detalhesBrutos = is_array($detalhesBrutos) ? $detalhesBrutos : [];
+
+    $tamanhosUnicos = [];
+    $coresUnicas = [];
+    $estoqueCombinacoes = [];
+
+    foreach ($detalhesBrutos as $detalhe) {
+        if (!is_array($detalhe)) {
+            continue;
+        }
+
+        $cor = isset($detalhe['cor']) ? trim($detalhe['cor']) : '';
+        $tamanho = isset($detalhe['tamanho']) ? trim($detalhe['tamanho']) : '';
+
+        if ($cor === '' || $tamanho === '') {
+            continue;
+        }
+
+        if (!in_array($tamanho, $tamanhosUnicos, true)) {
+            $tamanhosUnicos[] = $tamanho;
+        }
+
+        if (!array_key_exists(mb_strtolower($cor), $coresUnicas)) {
+            $coresUnicas[mb_strtolower($cor)] = [
+                'nome' => $cor,
+                'hex'  => $mapaCores[mb_strtolower($cor)] ?? '#CCCCCC',
+            ];
+        }
+
+        $chaveCombinacao = mb_strtolower($cor) . '||' . mb_strtolower($tamanho);
+
+        if (!isset($estoqueCombinacoes[$chaveCombinacao])) {
+            $estoqueCombinacoes[$chaveCombinacao] = [
+                'cor' => $cor,
+                'tamanho' => $tamanho,
+                'quantidade' => 0,
+            ];
+        }
+
+        $estoqueCombinacoes[$chaveCombinacao]['quantidade']++;
+    }
+
+    $coresLista = array_values($coresUnicas);
 @endphp
 
 <style>
     .product-page {
-        background-color: #321150;
+        background:
+            radial-gradient(circle at top left, rgba(123, 44, 191, 0.16), transparent 25%),
+            radial-gradient(circle at bottom right, rgba(88, 28, 135, 0.14), transparent 22%),
+            linear-gradient(180deg, #2b0d47 0%, #321150 42%, #2a0d43 100%);
         min-height: 100vh;
-        padding: 40px 6vw 60px;
+        padding: 28px 5vw 64px;
         color: #ffffff;
         display: flex;
         justify-content: center;
     }
+
     .product-grid {
         display: grid;
-        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-        gap: 40px;
+        grid-template-columns: minmax(0, 1.18fr) minmax(360px, 0.92fr);
+        gap: 34px;
         width: 100%;
-        max-width: 1200px;
+        max-width: 1320px;
+        align-items: start;
     }
+
+    .product-gallery,
+    .product-info-panel {
+        position: relative;
+        border-radius: 28px;
+        overflow: hidden;
+        background:
+            linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+        border: 1px solid rgba(255,255,255,0.07);
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
+        backdrop-filter: blur(10px);
+    }
+
     .product-gallery {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
+        padding: 18px;
     }
+
     .product-gallery-main {
-        display: flex;
-        gap: 16px;
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 18px;
         align-items: stretch;
     }
+
     .product-thumbs {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        width: 80px;
+        gap: 12px;
     }
+
     .product-thumb {
-        width: 80px;
-        height: 90px;
-        border-radius: 6px;
+        width: 92px;
+        height: 108px;
+        border-radius: 16px;
         overflow: hidden;
         cursor: pointer;
-        border: 2px solid transparent;
-        background-color: #1f0934;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transition: transform 0.2s ease, border-color 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        opacity: 0.82;
     }
+
     .product-thumb img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        display: block;
     }
-    .product-thumb:hover { transform: translateY(-2px); }
-    .product-thumb.active { border-color: #a855f7; }
+
+    .product-thumb:hover {
+        transform: translateY(-2px);
+        opacity: 1;
+    }
+
+    .product-thumb.active {
+        border-color: rgba(196, 161, 255, 0.95);
+        box-shadow: 0 0 0 2px rgba(123, 44, 191, 0.38);
+        opacity: 1;
+    }
 
     .product-main-image-wrapper {
-        flex: 1;
-        background-color: #1f0934;
-        padding: 16px;
-        border-radius: 8px;
+        position: relative;
+        height: min(78vh, 760px);
+        max-height: 760px;
+        border-radius: 24px;
+        overflow: hidden;
+        background:
+            linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
         display: flex;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
     }
+
+    .product-main-image-wrapper::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(to bottom, rgba(255,255,255,0.04), transparent 18%, transparent 80%, rgba(255,255,255,0.02));
+    }
+
     .product-main-image {
-        max-width: 100%;
-        max-height: 540px;
-        object-fit: cover;
-        border-radius: 6px;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        background: rgba(255,255,255,0.015);
     }
 
     .product-info-panel {
-        background-color: #1f0934;
-        border-radius: 10px;
-        padding: 24px 26px 28px;
+        padding: 28px 28px 30px;
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 20px;
     }
-    .product-title-main { font-size: 22px; font-weight: 600; margin: 0; }
-    .product-subtitle-category {
-        font-size: 13px;
-        opacity: 0.8;
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-    }
-    .product-price-main { font-size: 26px; font-weight: 700; margin: 4px 0 0 0; }
 
-    .product-size-select label,
-    .product-colors-block span,
-    .product-description-block h4,
-    .product-sales span {
-        font-size: 13px;
+    .product-mini-category {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.07);
+        font-size: 0.78rem;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        opacity: 0.9;
+        color: #f5ddff;
     }
+
+    .product-title-main {
+        font-size: 2rem;
+        line-height: 1.16;
+        font-weight: 700;
+        margin: 0;
+        color: #ffffff;
+    }
+
+    .product-price-main {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0;
+        color: #efe1ff;
+        text-shadow: 0 3px 18px rgba(123, 44, 191, 0.18);
+    }
+
+    .product-section-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: rgba(255,255,255,0.80);
+        display: block;
+        margin-bottom: 10px;
+    }
+
     .product-size-select .form-select {
-        background-color: #321150;
-        border: 1px solid #5f2491;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.10);
         color: #fff;
-        font-size: 14px;
+        font-size: 0.95rem;
+        border-radius: 14px;
+        padding: 12px 14px;
     }
-    .product-size-select .form-select:focus {
-        box-shadow: 0 0 0 0.1rem rgba(168, 85, 247, 0.6);
-        border-color: #a855f7;
+
+    .product-size-select .form-select:focus,
+    .product-freight-row input:focus {
+        box-shadow: 0 0 0 0.14rem rgba(123, 44, 191, 0.42);
+        border-color: #9d63e8;
+    }
+
+    .product-size-select .form-select option {
+        color: #111;
     }
 
     .product-colors-list {
         display: flex;
-        gap: 10px;
-        margin-top: 8px;
+        gap: 12px;
         flex-wrap: wrap;
+        margin-bottom: 30px;
     }
+
     .product-color-dot {
-        width: 26px;
-        height: 26px;
+        width: 34px;
+        height: 34px;
         border-radius: 50%;
-        border: 2px solid #ffffff;
-        box-shadow: 0 0 0 2px #1f0934;
+        border: 2px solid rgba(255,255,255,0.85);
+        box-shadow: 0 0 0 3px rgba(31, 9, 52, 0.70);
         cursor: pointer;
         position: relative;
-        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
     }
+
     .product-color-dot:hover {
-        transform: scale(1.06);
-        box-shadow: 0 0 0 2px #a855f7;
+        transform: scale(1.08);
+        box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.55);
     }
+
     .product-color-dot.selected {
-        transform: scale(1.1);
-        box-shadow: 0 0 0 2px #a855f7, 0 0 0 4px #321150;
+        transform: scale(1.12);
+        box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.85), 0 0 0 6px rgba(255,255,255,0.06);
     }
+
     .product-color-dot::after {
         content: attr(data-color-name);
         position: absolute;
-        bottom: -18px;
         left: 50%;
         transform: translateX(-50%);
+        bottom: -20px;
         font-size: 10px;
         white-space: nowrap;
+        color: rgba(255,255,255,0.84);
+    }
+
+    .product-selection-box {
+        padding: 16px 18px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.07);
     }
 
     .product-color-stock {
-        margin-top: 12px;
-        padding: 10px 14px;
-        border-radius: 8px;
-        background-color: rgba(50, 17, 80, 0.85);
-        border: 1px solid rgba(168, 85, 247, 0.5);
-        font-size: 13px;
+        margin-top: 18px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        font-size: 0.9rem;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
     }
-    .product-color-stock.hidden { display: none; }
+
+    .product-color-stock.hidden {
+        display: none;
+    }
+
     .product-color-stock-pill {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 18px;
-        min-height: 18px;
-        padding: 0 8px;
+        min-width: 26px;
+        min-height: 26px;
+        padding: 0 10px;
         border-radius: 999px;
-        background: linear-gradient(90deg, #7b2cbf, #a855f7);
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+        background: linear-gradient(90deg, #4c1d95, #6d28d9, #7b2cbf);
+        font-size: 12px;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: 0.06em;
     }
-    .product-color-stock-label { opacity: 0.95; }
 
-    .product-quantity-block { margin-top: 16px; }
-    .product-quantity-block span.label {
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        opacity: 0.9;
-        display: block;
-        margin-bottom: 6px;
+    .product-color-stock-label {
+        color: rgba(255,255,255,0.92);
     }
+
     .product-quantity-controls {
         display: inline-flex;
         align-items: center;
-        background-color: #321150;
+        background: rgba(255,255,255,0.05);
         border-radius: 999px;
-        border: 1px solid #5f2491;
+        border: 1px solid rgba(255,255,255,0.10);
         overflow: hidden;
     }
+
     .product-quantity-controls button {
         border: none;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 40px;
+        height: 40px;
         background: transparent;
         color: #fff;
-        font-size: 18px;
+        font-size: 1.15rem;
         cursor: pointer;
         transition: background-color 0.15s ease;
     }
-    .product-quantity-controls button:hover { background-color: #5f2491; }
+
+    .product-quantity-controls button:hover {
+        background-color: rgba(123, 44, 191, 0.34);
+    }
+
     .product-quantity-controls input {
-        width: 50px;
+        width: 64px;
         text-align: center;
         border: none;
         background: transparent;
         color: #fff;
-        font-size: 14px;
+        font-size: 0.95rem;
     }
-    .product-quantity-controls input:focus { outline: none; }
+
+    .product-quantity-controls input:focus {
+        outline: none;
+    }
+
     .product-quantity-hint {
         display: block;
-        margin-top: 4px;
-        font-size: 11px;
-        opacity: 0.8;
+        margin-top: 10px;
+        font-size: 0.8rem;
+        color: rgba(255,255,255,0.74);
+    }
+
+    .product-description-block,
+    .product-freight-block {
+        padding: 16px 18px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .product-description-title {
+        display: block;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: rgba(255,255,255,0.82);
+        margin-bottom: 10px;
     }
 
     .product-description-text {
-        font-size: 14px;
-        line-height: 1.5;
-        opacity: 0.95;
+        font-size: 0.95rem;
+        line-height: 1.65;
+        color: rgba(255,255,255,0.94);
         white-space: pre-line;
-    }
-    .product-sales strong {
-        font-size: 14px;
-        font-weight: 600;
+        margin: 0;
     }
 
     .product-buy-main-btn {
         width: 100%;
         border: none;
         border-radius: 999px;
-        padding: 12px 20px;
-        background: linear-gradient(90deg, #7b2cbf, #a855f7);
+        padding: 14px 20px;
+        background: linear-gradient(90deg, #3b0764, #5b21b6, #6d28d9);
         color: #ffffff;
-        font-weight: 700;
-        font-size: 15px;
+        font-weight: 800;
+        font-size: 0.95rem;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-top: 4px;
-        transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+        letter-spacing: 0.10em;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+        box-shadow: 0 14px 28px rgba(91, 33, 182, 0.24);
     }
+
     .product-buy-main-btn:hover {
         transform: translateY(-1px);
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
-        opacity: 0.95;
+        opacity: 0.97;
+        box-shadow: 0 18px 34px rgba(91, 33, 182, 0.30);
     }
-    .product-buy-main-btn:active {
-        transform: translateY(0);
-        box-shadow: none;
-        opacity: 0.9;
-    }
+
     .product-buy-main-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+        box-shadow: none;
     }
 
-    .product-freight-block {
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
-    }
-    .product-freight-block label {
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        opacity: 0.9;
-    }
     .product-freight-row {
         display: flex;
         gap: 10px;
-        margin-top: 8px;
+        margin-top: 10px;
     }
+
     .product-freight-row input {
-        background-color: #321150;
-        border: 1px solid #5f2491;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.10);
         color: #fff;
-        font-size: 14px;
+        border-radius: 14px;
+        padding: 12px 14px;
     }
-    .product-freight-row input:focus {
-        box-shadow: 0 0 0 0.1rem rgba(168, 85, 247, 0.6);
-        border-color: #a855f7;
-    }
+
     .product-freight-row button {
         white-space: nowrap;
         border-radius: 999px;
-        padding: 8px 18px;
+        padding: 10px 18px;
         border: none;
-        background-color: #7b2cbf;
+        background: linear-gradient(90deg, #4c1d95, #5b21b6, #6d28d9);
         color: #fff;
-        font-weight: 600;
-        font-size: 13px;
+        font-weight: 700;
+        font-size: 0.82rem;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
-        transition: background-color 0.12s ease, transform 0.12s ease;
+        letter-spacing: 0.08em;
+        transition: transform 0.15s ease, filter 0.15s ease;
     }
+
     .product-freight-row button:hover {
-        background-color: #a855f7;
+        filter: brightness(1.08);
         transform: translateY(-1px);
     }
 
-    @media (max-width: 900px) {
-        .product-grid { grid-template-columns: minmax(0, 1fr); }
+    @media (max-width: 1020px) {
+        .product-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .product-main-image-wrapper {
+            height: auto;
+            max-height: none;
+            min-height: 520px;
+        }
+
+        .product-main-image {
+            min-height: 520px;
+            max-height: 520px;
+        }
     }
-    @media (max-width: 576px) {
-        .product-page { padding: 20px 14px 40px; }
-        .product-info-panel { padding: 18px 18px 22px; }
-        .product-gallery-main { flex-direction: column; }
-        .product-thumbs { flex-direction: row; width: auto; }
+
+    @media (max-width: 700px) {
+        .product-page {
+            padding: 18px 12px 42px;
+        }
+
+        .product-gallery {
+            padding: 14px;
+            border-radius: 22px;
+        }
+
+        .product-gallery-main {
+            grid-template-columns: 1fr;
+        }
+
+        .product-thumbs {
+            order: 2;
+            flex-direction: row;
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .product-thumb {
+            min-width: 78px;
+            width: 78px;
+            height: 94px;
+        }
+
+        .product-main-image-wrapper {
+            height: auto;
+            min-height: 380px;
+            max-height: none;
+        }
+
+        .product-main-image {
+            min-height: 380px;
+            max-height: 380px;
+        }
+
+        .product-info-panel {
+            padding: 20px 18px 22px;
+            border-radius: 22px;
+        }
+
+        .product-title-main {
+            font-size: 1.5rem;
+        }
+
+        .product-price-main {
+            font-size: 1.6rem;
+        }
+
+        .product-freight-row {
+            flex-direction: column;
+        }
     }
 </style>
 
 <section class="product-page">
     <div class="product-grid">
 
-        {{-- COLUNA ESQUERDA – GALERIA --}}
         <div class="product-gallery">
             <div class="product-gallery-main">
                 @if(count($imagens) > 1)
@@ -407,18 +593,23 @@
                     <img
                         id="product-main-image"
                         class="product-main-image"
-                        src="{{ $imagens[0] ?? '' }}"
+                        src="{{ $imagens[0] ?? asset('img/sem-imagem.png') }}"
                         alt="{{ $produto->titulo }}"
                     >
                 </div>
             </div>
         </div>
 
-        {{-- COLUNA DIREITA – INFORMAÇÕES --}}
         <div class="product-info-panel">
 
             <div>
-                <p class="product-subtitle-category">{{ $produto->categorias }}</p>
+                <span class="product-mini-category">
+                    <i class="bi bi-stars"></i>
+                    {{ $produto->categorias }}
+                </span>
+            </div>
+
+            <div>
                 <h1 class="product-title-main">{{ $produto->titulo }}</h1>
             </div>
 
@@ -428,70 +619,68 @@
                 </p>
             </div>
 
-            <div class="product-size-select">
-                <label for="select-tamanho">Tamanho</label>
-                <select id="select-tamanho" class="form-select mt-1">
-                    <option value="{{ $produto->tamanho }}" selected>
-                        {{ $produto->tamanho }}
-                    </option>
-                </select>
-            </div>
-
-            @if(count($cores) > 0)
-                <div class="product-colors-block">
-                    <span>Cores</span>
-                    <div class="product-colors-list" id="product-colors-list">
-                        @foreach($cores as $index => $c)
-                            <div
-                                class="product-color-dot"
-                                style="background-color: {{ $c['cor'] }};"
-                                data-color-name="{{ $c['nome'] }}"
-                                data-quantity="{{ $c['quantidade'] ?? '' }}"
-                                data-index="{{ $index }}"
-                            ></div>
+            <div class="product-selection-box">
+                <div class="product-size-select">
+                    <label for="select-tamanho" class="product-section-label">Tamanho</label>
+                    <select id="select-tamanho" class="form-select">
+                        <option value="">Selecione um tamanho</option>
+                        @foreach($tamanhosUnicos as $tamanho)
+                            <option value="{{ $tamanho }}">{{ $tamanho }}</option>
                         @endforeach
+                    </select>
+                </div>
+
+                @if(count($coresLista) > 0)
+                    <div class="product-colors-block mt-4">
+                        <span class="product-section-label">Cores</span>
+
+                        <div class="product-colors-list" id="product-colors-list">
+                            @foreach($coresLista as $index => $c)
+                                <div
+                                    class="product-color-dot"
+                                    style="background-color: {{ $c['hex'] }};"
+                                    data-color-name="{{ $c['nome'] }}"
+                                    data-color-key="{{ mb_strtolower($c['nome']) }}"
+                                    data-index="{{ $index }}"
+                                    title="{{ $c['nome'] }}"
+                                ></div>
+                            @endforeach
+                        </div>
+
+                        <div id="product-color-stock" class="product-color-stock hidden">
+                            <span class="product-color-stock-pill" id="product-color-stock-pill">0</span>
+                            <span class="product-color-stock-label" id="product-color-stock-label">
+                                Selecione tamanho e cor para ver a quantidade disponível.
+                            </span>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="product-quantity-block mt-4">
+                    <span class="product-section-label">Quantidade</span>
+
+                    <div class="product-quantity-controls">
+                        <button type="button" id="qty-minus">−</button>
+                        <input type="number" id="product-quantity" value="1" min="1">
+                        <button type="button" id="qty-plus">+</button>
                     </div>
 
-                    <div id="product-color-stock" class="product-color-stock hidden">
-                        <span class="product-color-stock-pill" id="product-color-stock-pill">0</span>
-                        <span class="product-color-stock-label" id="product-color-stock-label">
-                            Selecione uma cor para ver a quantidade disponível.
-                        </span>
-                    </div>
+                    <small class="product-quantity-hint" id="product-quantity-hint">
+                        Selecione tamanho e cor para ver o estoque disponível.
+                    </small>
                 </div>
-            @endif
-
-            {{-- Quantidade --}}
-            <div class="product-quantity-block">
-                <span class="label">Quantidade</span>
-                <div class="product-quantity-controls">
-                    <button type="button" id="qty-minus">−</button>
-                    <input type="number" id="product-quantity" value="1" min="1">
-                    <button type="button" id="qty-plus">+</button>
-                </div>
-                <small class="product-quantity-hint" id="product-quantity-hint">
-                    Selecione uma cor para ver o máximo disponível.
-                </small>
             </div>
 
             <div class="product-description-block">
-                <h4>Descrição</h4>
+                <span class="product-description-title">Descrição</span>
                 <p class="product-description-text">{{ $produto->descricao }}</p>
             </div>
 
-            <div class="product-sales">
-                <span>Vendas</span><br>
-                <strong>
-                    {{ $produto->qtd_vendas }}
-                    {{ $produto->qtd_vendas == 1 ? 'unidade' : 'unidades' }} vendidas
-                </strong>
-            </div>
-
-            {{-- FORM PRA ADD TO CART --}}
             <form id="form-add-cart" method="POST" action="{{ route('cart.add') }}">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $produto->id }}">
                 <input type="hidden" name="color" id="cart-color">
+                <input type="hidden" name="size" id="cart-size">
                 <input type="hidden" name="quantity" id="cart-quantity">
 
                 <button
@@ -504,9 +693,8 @@
                 </button>
             </form>
 
-            {{-- BLOCO FRETE / CEP (placeholder) --}}
             <div class="product-freight-block">
-                <label for="cep">Calcular frete</label>
+                <label for="cep" class="product-section-label" style="margin-bottom:0;">Calcular frete</label>
                 <div class="product-freight-row">
                     <input
                         type="text"
@@ -526,7 +714,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // ===== GALERIA =====
     const mainImg = document.getElementById('product-main-image');
     const thumbs  = document.querySelectorAll('.product-thumb');
 
@@ -549,62 +736,138 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ===== CORES + QUANTIDADE =====
-    const colorDots   = document.querySelectorAll('.product-color-dot');
-    const stockBox    = document.getElementById('product-color-stock');
-    const stockPill   = document.getElementById('product-color-stock-pill');
-    const stockLabel  = document.getElementById('product-color-stock-label');
+    const estoqueCombinacoes = @json($estoqueCombinacoes);
 
-    const qtyInput    = document.getElementById('product-quantity');
-    const qtyMinus    = document.getElementById('qty-minus');
-    const qtyPlus     = document.getElementById('qty-plus');
-    const qtyHint     = document.getElementById('product-quantity-hint');
+    const selectTamanho = document.getElementById('select-tamanho');
+    const colorDots     = document.querySelectorAll('.product-color-dot');
 
-    const buyBtn      = document.getElementById('btn-buy');
-    const formAddCart = document.getElementById('form-add-cart');
+    const stockBox      = document.getElementById('product-color-stock');
+    const stockPill     = document.getElementById('product-color-stock-pill');
+    const stockLabel    = document.getElementById('product-color-stock-label');
+
+    const qtyInput      = document.getElementById('product-quantity');
+    const qtyMinus      = document.getElementById('qty-minus');
+    const qtyPlus       = document.getElementById('qty-plus');
+    const qtyHint       = document.getElementById('product-quantity-hint');
+
+    const buyBtn        = document.getElementById('btn-buy');
+    const formAddCart   = document.getElementById('form-add-cart');
     const cartColorInput    = document.getElementById('cart-color');
+    const cartSizeInput     = document.getElementById('cart-size');
     const cartQuantityInput = document.getElementById('cart-quantity');
 
-    let selectedColorName  = null;
-    let selectedColorStock = null;
+    let selectedColorName = '';
+    let selectedColorKey = '';
+    let selectedSize = '';
+    let selectedStock = null;
 
-    function updateQtyLimits() {
-        let min = 1;
-        let max = selectedColorStock !== null ? selectedColorStock : Infinity;
+    function getCombinationKey(corKey, tamanho) {
+        return String(corKey).toLowerCase() + '||' + String(tamanho).toLowerCase();
+    }
 
-        if (selectedColorStock === null) {
-            qtyHint.textContent = 'Selecione uma cor para ver o máximo disponível.';
-        } else if (selectedColorStock <= 0) {
-            qtyHint.textContent = `Cor ${selectedColorName}: esgotado.`;
-        } else {
-            qtyHint.textContent = `Cor ${selectedColorName}: máximo ${selectedColorStock} unidade(s) por compra.`;
+    function updateStockInfo() {
+        selectedSize = selectTamanho ? (selectTamanho.value || '') : '';
+
+        if (!selectedColorKey && !selectedSize) {
+            selectedStock = null;
+
+            if (stockBox) {
+                stockBox.classList.remove('hidden');
+                stockPill.textContent = '-';
+                stockLabel.textContent = 'Selecione tamanho e cor para ver a quantidade disponível.';
+            }
+
+            qtyHint.textContent = 'Selecione tamanho e cor para ver o estoque disponível.';
+            qtyInput.value = 1;
+            qtyInput.min = 1;
+            qtyInput.removeAttribute('max');
+            return;
         }
+
+        if (!selectedColorKey || !selectedSize) {
+            selectedStock = null;
+
+            if (stockBox) {
+                stockBox.classList.remove('hidden');
+                stockPill.textContent = '-';
+                stockLabel.textContent = 'Falta selecionar ' + (!selectedColorKey ? 'a cor' : 'o tamanho') + ' para verificar o estoque.';
+            }
+
+            qtyHint.textContent = 'Selecione tamanho e cor para liberar a quantidade correta.';
+            qtyInput.value = 1;
+            qtyInput.min = 1;
+            qtyInput.removeAttribute('max');
+            return;
+        }
+
+        const combinationKey = getCombinationKey(selectedColorKey, selectedSize);
+        const combinacao = estoqueCombinacoes[combinationKey] || null;
+        selectedStock = combinacao ? parseInt(combinacao.quantidade, 10) : 0;
+
+        if (stockBox) {
+            stockBox.classList.remove('hidden');
+        }
+
+        if (!combinacao || selectedStock <= 0) {
+            if (stockPill) stockPill.textContent = '0';
+            if (stockLabel) {
+                stockLabel.textContent = `Cor ${selectedColorName} no tamanho ${selectedSize}: esgotado.`;
+            }
+            qtyHint.textContent = `Combinação ${selectedColorName} / ${selectedSize} indisponível.`;
+            qtyInput.value = 1;
+            qtyInput.min = 1;
+            qtyInput.max = 1;
+            return;
+        }
+
+        if (stockPill) stockPill.textContent = selectedStock;
+        if (stockLabel) {
+            stockLabel.textContent =
+                `Cor ${selectedColorName} no tamanho ${selectedSize}: ${selectedStock} ` +
+                `${selectedStock === 1 ? 'unidade disponível' : 'unidades disponíveis'}.`;
+        }
+
+        qtyHint.textContent =
+            `Você pode comprar até ${selectedStock} ${selectedStock === 1 ? 'unidade' : 'unidades'} dessa combinação.`;
 
         qtyInput.min = 1;
-        if (selectedColorStock !== null) {
-            qtyInput.max = Math.max(1, selectedColorStock);
-        } else {
-            qtyInput.removeAttribute('max');
-        }
+        qtyInput.max = selectedStock;
 
         let current = parseInt(qtyInput.value || '1', 10);
-        if (isNaN(current) || current < min) current = min;
-        if (selectedColorStock !== null && current > max) current = max;
+        if (isNaN(current) || current < 1) current = 1;
+        if (current > selectedStock) current = selectedStock;
         qtyInput.value = current;
     }
+
+    if (selectTamanho) {
+        selectTamanho.addEventListener('change', updateStockInfo);
+    }
+
+    colorDots.forEach(dot => {
+        dot.addEventListener('click', function () {
+            selectedColorName = this.getAttribute('data-color-name') || '';
+            selectedColorKey  = this.getAttribute('data-color-key') || '';
+
+            colorDots.forEach(d => d.classList.remove('selected'));
+            this.classList.add('selected');
+
+            updateStockInfo();
+        });
+    });
 
     if (qtyMinus && qtyPlus && qtyInput) {
         qtyMinus.addEventListener('click', () => {
             let val = parseInt(qtyInput.value || '1', 10);
-            if (isNaN(val)) val = 1;
+            if (isNaN(val) || val < 1) val = 1;
             if (val > 1) val--;
             qtyInput.value = val;
         });
 
         qtyPlus.addEventListener('click', () => {
             let val = parseInt(qtyInput.value || '1', 10);
-            if (isNaN(val)) val = 1;
-            let max = selectedColorStock !== null ? selectedColorStock : Infinity;
+            if (isNaN(val) || val < 1) val = 1;
+
+            let max = selectedStock !== null ? selectedStock : Infinity;
             if (val < max) val++;
             qtyInput.value = val;
         });
@@ -612,53 +875,36 @@ document.addEventListener('DOMContentLoaded', function () {
         qtyInput.addEventListener('input', () => {
             let val = parseInt(qtyInput.value || '1', 10);
             if (isNaN(val) || val < 1) val = 1;
-            let max = selectedColorStock !== null ? selectedColorStock : Infinity;
+
+            let max = selectedStock !== null ? selectedStock : Infinity;
             if (val > max) val = max;
+
             qtyInput.value = val;
         });
     }
 
-    if (colorDots.length > 0 && stockBox && stockPill && stockLabel) {
-        colorDots.forEach(dot => {
-            dot.addEventListener('click', () => {
-                const nome       = dot.getAttribute('data-color-name') || '';
-                const quantidade = dot.getAttribute('data-quantity');
-
-                selectedColorName = nome;
-                const qtdNum = quantidade === '' || quantidade === null
-                    ? null
-                    : parseInt(quantidade, 10);
-                selectedColorStock = (qtdNum !== null && !isNaN(qtdNum)) ? qtdNum : null;
-
-                colorDots.forEach(d => d.classList.remove('selected'));
-                dot.classList.add('selected');
-
-                stockBox.classList.remove('hidden');
-
-                if (qtdNum === null || isNaN(qtdNum)) {
-                    stockPill.textContent = '-';
-                    stockLabel.textContent = `Estoque não informado para a cor ${nome}.`;
-                } else if (qtdNum <= 0) {
-                    stockPill.textContent = '0';
-                    stockLabel.textContent = `Cor ${nome}: produto esgotado nesta cor.`;
-                } else {
-                    stockPill.textContent = qtdNum;
-                    stockLabel.textContent =
-                        `Cor ${nome}: ${qtdNum} ${qtdNum === 1 ? 'unidade disponível' : 'unidades disponíveis'}.`;
-                }
-
-                updateQtyLimits();
-            });
-        });
-    }
-
-    // ===== COMPRAR -> ENVIA PRO BACK =====
-    if (buyBtn && formAddCart && cartColorInput && cartQuantityInput) {
+    if (buyBtn && formAddCart && cartColorInput && cartSizeInput && cartQuantityInput) {
         buyBtn.addEventListener('click', () => {
             const quantity = parseInt(qtyInput.value || '1', 10);
+            const size = selectTamanho ? (selectTamanho.value || '') : '';
+
+            if (!size) {
+                alert('Selecione um tamanho antes de adicionar ao carrinho.');
+                return;
+            }
 
             if (!selectedColorName) {
                 alert('Selecione uma cor antes de adicionar ao carrinho.');
+                return;
+            }
+
+            if (selectedStock === null) {
+                alert('Selecione tamanho e cor corretamente.');
+                return;
+            }
+
+            if (selectedStock <= 0) {
+                alert('Essa combinação está sem estoque.');
                 return;
             }
 
@@ -667,17 +913,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (selectedColorStock !== null && quantity > selectedColorStock) {
+            if (quantity > selectedStock) {
                 alert('Quantidade selecionada maior que o estoque disponível.');
                 return;
             }
 
-            cartColorInput.value    = selectedColorName;
+            cartColorInput.value = selectedColorName;
+            cartSizeInput.value = size;
             cartQuantityInput.value = quantity;
 
             formAddCart.submit();
         });
     }
+
+    updateStockInfo();
 });
 </script>
 
