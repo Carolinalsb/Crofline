@@ -40,73 +40,71 @@
         'vermelho'         => '#C1121F',
     ];
 
-    $imagens = [];
-    $imagemRaw = $produto->imagem ?? null;
-
-    if (!empty($imagemRaw)) {
-        $imagemJson = json_decode($imagemRaw, true);
-
-        if (json_last_error() === JSON_ERROR_NONE && is_array($imagemJson)) {
-            foreach ($imagemJson as $itemImagem) {
-                if (is_array($itemImagem) && !empty($itemImagem['imagem'])) {
-                    $imagens[] = asset('img/' . $itemImagem['imagem']);
-                } elseif (is_string($itemImagem) && !empty($itemImagem)) {
-                    $imagens[] = asset('img/' . $itemImagem);
-                }
-            }
-        } else {
-            $imagens[] = asset('img/' . $imagemRaw);
-        }
-    }
-
-    if (empty($imagens)) {
-        $imagens[] = asset('img/sem-imagem.png');
-    }
-
-    $detalhesBrutos = json_decode($produto->qtd_detalhes ?? '[]', true);
+    $detalhesBrutos = json_decode($produto->detalhes ?? '[]', true);
     $detalhesBrutos = is_array($detalhesBrutos) ? $detalhesBrutos : [];
 
+    $variacoes = [];
     $tamanhosUnicos = [];
     $coresUnicas = [];
-    $estoqueCombinacoes = [];
 
-    foreach ($detalhesBrutos as $detalhe) {
+    foreach ($detalhesBrutos as $indice => $detalhe) {
         if (!is_array($detalhe)) {
             continue;
         }
 
-        $cor = isset($detalhe['cor']) ? trim($detalhe['cor']) : '';
-        $tamanho = isset($detalhe['tamanho']) ? trim($detalhe['tamanho']) : '';
+        $cor = trim($detalhe['cor'] ?? '');
+        $tamanho = trim($detalhe['tamanho'] ?? '');
+        $valor = isset($detalhe['valor']) ? (float) $detalhe['valor'] : 0;
 
-        if ($cor === '' || $tamanho === '') {
-            continue;
+        $imagens = [];
+        if (isset($detalhe['imagens']) && is_array($detalhe['imagens'])) {
+            foreach (['imagem1', 'imagem2', 'imagem3', 'imagem4'] as $chaveImagem) {
+                if (!empty($detalhe['imagens'][$chaveImagem])) {
+                    $imagens[] = $detalhe['imagens'][$chaveImagem];
+                }
+            }
         }
 
-        if (!in_array($tamanho, $tamanhosUnicos, true)) {
+        $variacoes[] = [
+            'index' => $indice,
+            'cor' => $cor,
+            'cor_key' => mb_strtolower($cor),
+            'tamanho' => $tamanho,
+            'valor' => $valor,
+            'imagens' => $imagens,
+        ];
+
+        if ($tamanho !== '' && !in_array($tamanho, $tamanhosUnicos, true)) {
             $tamanhosUnicos[] = $tamanho;
         }
 
-        if (!array_key_exists(mb_strtolower($cor), $coresUnicas)) {
+        if ($cor !== '' && !isset($coresUnicas[mb_strtolower($cor)])) {
             $coresUnicas[mb_strtolower($cor)] = [
                 'nome' => $cor,
-                'hex'  => $mapaCores[mb_strtolower($cor)] ?? '#CCCCCC',
+                'hex' => $mapaCores[mb_strtolower($cor)] ?? '#CCCCCC',
             ];
         }
-
-        $chaveCombinacao = mb_strtolower($cor) . '||' . mb_strtolower($tamanho);
-
-        if (!isset($estoqueCombinacoes[$chaveCombinacao])) {
-            $estoqueCombinacoes[$chaveCombinacao] = [
-                'cor' => $cor,
-                'tamanho' => $tamanho,
-                'quantidade' => 0,
-            ];
-        }
-
-        $estoqueCombinacoes[$chaveCombinacao]['quantidade']++;
     }
 
+    $primeiraVariacao = $variacoes[0] ?? [
+        'index' => 0,
+        'cor' => '',
+        'cor_key' => '',
+        'tamanho' => '',
+        'valor' => 0,
+        'imagens' => [],
+    ];
+
     $coresLista = array_values($coresUnicas);
+
+    $estoqueCombinacoes = [];
+    foreach ($variacoes as $variacao) {
+        $chave = $variacao['cor_key'] . '||' . mb_strtolower($variacao['tamanho']);
+        if (!isset($estoqueCombinacoes[$chave])) {
+            $estoqueCombinacoes[$chave] = 0;
+        }
+        $estoqueCombinacoes[$chave]++;
+    }
 @endphp
 
 <style>
@@ -576,24 +574,13 @@
 
         <div class="product-gallery">
             <div class="product-gallery-main">
-                @if(count($imagens) > 1)
-                    <div class="product-thumbs">
-                        @foreach($imagens as $idx => $img)
-                            <div
-                                class="product-thumb {{ $idx === 0 ? 'active' : '' }}"
-                                data-image="{{ $img }}"
-                            >
-                                <img src="{{ $img }}" alt="Imagem {{ $idx + 1 }} de {{ $produto->titulo }}">
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
+                <div class="product-thumbs" id="product-thumbs"></div>
 
                 <div class="product-main-image-wrapper">
                     <img
                         id="product-main-image"
                         class="product-main-image"
-                        src="{{ $imagens[0] ?? asset('img/sem-imagem.png') }}"
+                        src="{{ !empty($primeiraVariacao['imagens'][0]) ? asset('img/' . $primeiraVariacao['imagens'][0]) : asset('img/sem-imagem.png') }}"
                         alt="{{ $produto->titulo }}"
                     >
                 </div>
@@ -614,8 +601,8 @@
             </div>
 
             <div>
-                <p class="product-price-main">
-                    R$ {{ number_format($produto->valor, 2, ',', '.') }}
+                <p class="product-price-main" id="product-price-main">
+                    R$ {{ number_format($primeiraVariacao['valor'] ?? 0, 2, ',', '.') }}
                 </p>
             </div>
 
@@ -625,7 +612,9 @@
                     <select id="select-tamanho" class="form-select">
                         <option value="">Selecione um tamanho</option>
                         @foreach($tamanhosUnicos as $tamanho)
-                            <option value="{{ $tamanho }}">{{ $tamanho }}</option>
+                            <option value="{{ $tamanho }}" {{ ($primeiraVariacao['tamanho'] ?? '') === $tamanho ? 'selected' : '' }}>
+                                {{ $tamanho }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -637,7 +626,7 @@
                         <div class="product-colors-list" id="product-colors-list">
                             @foreach($coresLista as $index => $c)
                                 <div
-                                    class="product-color-dot"
+                                    class="product-color-dot {{ ($primeiraVariacao['cor_key'] ?? '') === mb_strtolower($c['nome']) ? 'selected' : '' }}"
                                     style="background-color: {{ $c['hex'] }};"
                                     data-color-name="{{ $c['nome'] }}"
                                     data-color-key="{{ mb_strtolower($c['nome']) }}"
@@ -647,8 +636,8 @@
                             @endforeach
                         </div>
 
-                        <div id="product-color-stock" class="product-color-stock hidden">
-                            <span class="product-color-stock-pill" id="product-color-stock-pill">0</span>
+                        <div id="product-color-stock" class="product-color-stock">
+                            <span class="product-color-stock-pill" id="product-color-stock-pill">-</span>
                             <span class="product-color-stock-label" id="product-color-stock-label">
                                 Selecione tamanho e cor para ver a quantidade disponível.
                             </span>
@@ -714,69 +703,106 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const mainImg = document.getElementById('product-main-image');
-    const thumbs  = document.querySelectorAll('.product-thumb');
-
-    thumbs.forEach(thumb => {
-        thumb.addEventListener('click', function () {
-            const newSrc = this.getAttribute('data-image');
-            if (!newSrc) return;
-
-            mainImg.src = newSrc;
-            thumbs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-
-    const freteBtn = document.getElementById('btn-calcular-frete');
-    if (freteBtn) {
-        freteBtn.addEventListener('click', function () {
-            const cep = document.getElementById('cep').value;
-            console.log('Calcular frete para CEP:', cep);
-        });
-    }
-
+    const variacoes = @json($variacoes);
     const estoqueCombinacoes = @json($estoqueCombinacoes);
 
+    const mainImg = document.getElementById('product-main-image');
+    const thumbsContainer = document.getElementById('product-thumbs');
+    const priceEl = document.getElementById('product-price-main');
+
     const selectTamanho = document.getElementById('select-tamanho');
-    const colorDots     = document.querySelectorAll('.product-color-dot');
+    const colorDots = document.querySelectorAll('.product-color-dot');
 
-    const stockBox      = document.getElementById('product-color-stock');
-    const stockPill     = document.getElementById('product-color-stock-pill');
-    const stockLabel    = document.getElementById('product-color-stock-label');
+    const stockBox = document.getElementById('product-color-stock');
+    const stockPill = document.getElementById('product-color-stock-pill');
+    const stockLabel = document.getElementById('product-color-stock-label');
 
-    const qtyInput      = document.getElementById('product-quantity');
-    const qtyMinus      = document.getElementById('qty-minus');
-    const qtyPlus       = document.getElementById('qty-plus');
-    const qtyHint       = document.getElementById('product-quantity-hint');
+    const qtyInput = document.getElementById('product-quantity');
+    const qtyMinus = document.getElementById('qty-minus');
+    const qtyPlus = document.getElementById('qty-plus');
+    const qtyHint = document.getElementById('product-quantity-hint');
 
-    const buyBtn        = document.getElementById('btn-buy');
-    const formAddCart   = document.getElementById('form-add-cart');
-    const cartColorInput    = document.getElementById('cart-color');
-    const cartSizeInput     = document.getElementById('cart-size');
+    const buyBtn = document.getElementById('btn-buy');
+    const formAddCart = document.getElementById('form-add-cart');
+    const cartColorInput = document.getElementById('cart-color');
+    const cartSizeInput = document.getElementById('cart-size');
     const cartQuantityInput = document.getElementById('cart-quantity');
 
-    let selectedColorName = '';
-    let selectedColorKey = '';
-    let selectedSize = '';
+    const freteBtn = document.getElementById('btn-calcular-frete');
+
+    let selectedColorKey = @json($primeiraVariacao['cor_key'] ?? '');
+    let selectedColorName = @json($primeiraVariacao['cor'] ?? '');
+    let selectedSize = @json($primeiraVariacao['tamanho'] ?? '');
+    let currentVariation = variacoes.length ? variacoes[0] : null;
     let selectedStock = null;
+
+    function formatCurrency(value) {
+        return Number(value || 0).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        });
+    }
 
     function getCombinationKey(corKey, tamanho) {
         return String(corKey).toLowerCase() + '||' + String(tamanho).toLowerCase();
     }
 
-    function updateStockInfo() {
-        selectedSize = selectTamanho ? (selectTamanho.value || '') : '';
+    function getVariationByColorAndSize(corKey, tamanho) {
+        return variacoes.find(function (variacao) {
+            return variacao.cor_key === corKey && variacao.tamanho === tamanho;
+        }) || null;
+    }
 
-        if (!selectedColorKey && !selectedSize) {
+    function getFirstVariationByColor(corKey) {
+        return variacoes.find(function (variacao) {
+            return variacao.cor_key === corKey;
+        }) || null;
+    }
+
+    function getFirstVariationBySize(tamanho) {
+        return variacoes.find(function (variacao) {
+            return variacao.tamanho === tamanho;
+        }) || null;
+    }
+
+    function renderThumbs(images) {
+        if (!thumbsContainer) return;
+
+        thumbsContainer.innerHTML = '';
+
+        const lista = Array.isArray(images) && images.length ? images : ['{{ asset('img/sem-imagem.png') }}'];
+
+        lista.forEach(function (imgSrc, index) {
+            const thumb = document.createElement('div');
+            thumb.className = 'product-thumb' + (index === 0 ? ' active' : '');
+            thumb.setAttribute('data-image', '{{ asset('img') }}/' + imgSrc);
+
+            const img = document.createElement('img');
+            img.src = '{{ asset('img') }}/' + imgSrc;
+            img.alt = 'Imagem ' + (index + 1) + ' de {{ $produto->titulo }}';
+
+            thumb.appendChild(img);
+            thumbsContainer.appendChild(thumb);
+
+            thumb.addEventListener('click', function () {
+                mainImg.src = img.src;
+                thumbsContainer.querySelectorAll('.product-thumb').forEach(function (t) {
+                    t.classList.remove('active');
+                });
+                thumb.classList.add('active');
+            });
+        });
+
+        mainImg.src = '{{ asset('img') }}/' + lista[0];
+    }
+
+    function updateStockInfo() {
+        if (!selectedColorKey || !selectedSize) {
             selectedStock = null;
 
-            if (stockBox) {
-                stockBox.classList.remove('hidden');
-                stockPill.textContent = '-';
-                stockLabel.textContent = 'Selecione tamanho e cor para ver a quantidade disponível.';
-            }
-
+            if (stockBox) stockBox.classList.remove('hidden');
+            if (stockPill) stockPill.textContent = '-';
+            if (stockLabel) stockLabel.textContent = 'Selecione tamanho e cor para ver a quantidade disponível.';
             qtyHint.textContent = 'Selecione tamanho e cor para ver o estoque disponível.';
             qtyInput.value = 1;
             qtyInput.min = 1;
@@ -784,39 +810,19 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        if (!selectedColorKey || !selectedSize) {
-            selectedStock = null;
-
-            if (stockBox) {
-                stockBox.classList.remove('hidden');
-                stockPill.textContent = '-';
-                stockLabel.textContent = 'Falta selecionar ' + (!selectedColorKey ? 'a cor' : 'o tamanho') + ' para verificar o estoque.';
-            }
-
-            qtyHint.textContent = 'Selecione tamanho e cor para liberar a quantidade correta.';
-            qtyInput.value = 1;
-            qtyInput.min = 1;
-            qtyInput.removeAttribute('max');
-            return;
-        }
-
         const combinationKey = getCombinationKey(selectedColorKey, selectedSize);
-        const combinacao = estoqueCombinacoes[combinationKey] || null;
-        selectedStock = combinacao ? parseInt(combinacao.quantidade, 10) : 0;
+        selectedStock = parseInt(estoqueCombinacoes[combinationKey] || 0, 10);
 
-        if (stockBox) {
-            stockBox.classList.remove('hidden');
-        }
+        if (stockBox) stockBox.classList.remove('hidden');
 
-        if (!combinacao || selectedStock <= 0) {
+        if (!selectedStock || selectedStock <= 0) {
             if (stockPill) stockPill.textContent = '0';
-            if (stockLabel) {
-                stockLabel.textContent = `Cor ${selectedColorName} no tamanho ${selectedSize}: esgotado.`;
-            }
+            if (stockLabel) stockLabel.textContent = `Cor ${selectedColorName} no tamanho ${selectedSize}: esgotado.`;
             qtyHint.textContent = `Combinação ${selectedColorName} / ${selectedSize} indisponível.`;
             qtyInput.value = 1;
             qtyInput.min = 1;
             qtyInput.max = 1;
+            buyBtn.disabled = true;
             return;
         }
 
@@ -837,46 +843,97 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isNaN(current) || current < 1) current = 1;
         if (current > selectedStock) current = selectedStock;
         qtyInput.value = current;
+
+        buyBtn.disabled = false;
     }
 
-    if (selectTamanho) {
-        selectTamanho.addEventListener('change', updateStockInfo);
+    function updateVariationUI() {
+        let variation = getVariationByColorAndSize(selectedColorKey, selectedSize);
+
+        if (!variation && selectedColorKey) {
+            variation = getFirstVariationByColor(selectedColorKey);
+            if (variation) {
+                selectedSize = variation.tamanho;
+                if (selectTamanho) selectTamanho.value = variation.tamanho;
+            }
+        }
+
+        if (!variation && selectedSize) {
+            variation = getFirstVariationBySize(selectedSize);
+            if (variation) {
+                selectedColorKey = variation.cor_key;
+                selectedColorName = variation.cor;
+            }
+        }
+
+        if (!variation && variacoes.length) {
+            variation = variacoes[0];
+            selectedColorKey = variation.cor_key;
+            selectedColorName = variation.cor;
+            selectedSize = variation.tamanho;
+
+            if (selectTamanho) selectTamanho.value = variation.tamanho;
+        }
+
+        currentVariation = variation;
+
+        colorDots.forEach(function (dot) {
+            dot.classList.toggle('selected', dot.getAttribute('data-color-key') === selectedColorKey);
+        });
+
+        if (currentVariation) {
+            selectedColorName = currentVariation.cor;
+            if (priceEl) {
+                priceEl.textContent = formatCurrency(currentVariation.valor);
+            }
+            renderThumbs(currentVariation.imagens || []);
+        } else {
+            if (priceEl) {
+                priceEl.textContent = formatCurrency(0);
+            }
+            renderThumbs([]);
+        }
+
+        updateStockInfo();
     }
 
-    colorDots.forEach(dot => {
+    colorDots.forEach(function (dot) {
         dot.addEventListener('click', function () {
+            selectedColorKey = this.getAttribute('data-color-key') || '';
             selectedColorName = this.getAttribute('data-color-name') || '';
-            selectedColorKey  = this.getAttribute('data-color-key') || '';
-
-            colorDots.forEach(d => d.classList.remove('selected'));
-            this.classList.add('selected');
-
-            updateStockInfo();
+            updateVariationUI();
         });
     });
 
+    if (selectTamanho) {
+        selectTamanho.addEventListener('change', function () {
+            selectedSize = this.value || '';
+            updateVariationUI();
+        });
+    }
+
     if (qtyMinus && qtyPlus && qtyInput) {
-        qtyMinus.addEventListener('click', () => {
+        qtyMinus.addEventListener('click', function () {
             let val = parseInt(qtyInput.value || '1', 10);
             if (isNaN(val) || val < 1) val = 1;
             if (val > 1) val--;
             qtyInput.value = val;
         });
 
-        qtyPlus.addEventListener('click', () => {
+        qtyPlus.addEventListener('click', function () {
             let val = parseInt(qtyInput.value || '1', 10);
             if (isNaN(val) || val < 1) val = 1;
 
-            let max = selectedStock !== null ? selectedStock : Infinity;
+            let max = selectedStock !== null ? selectedStock : 1;
             if (val < max) val++;
             qtyInput.value = val;
         });
 
-        qtyInput.addEventListener('input', () => {
+        qtyInput.addEventListener('input', function () {
             let val = parseInt(qtyInput.value || '1', 10);
             if (isNaN(val) || val < 1) val = 1;
 
-            let max = selectedStock !== null ? selectedStock : Infinity;
+            let max = selectedStock !== null ? selectedStock : 1;
             if (val > max) val = max;
 
             qtyInput.value = val;
@@ -884,11 +941,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (buyBtn && formAddCart && cartColorInput && cartSizeInput && cartQuantityInput) {
-        buyBtn.addEventListener('click', () => {
+        buyBtn.addEventListener('click', function () {
             const quantity = parseInt(qtyInput.value || '1', 10);
-            const size = selectTamanho ? (selectTamanho.value || '') : '';
 
-            if (!size) {
+            if (!selectedSize) {
                 alert('Selecione um tamanho antes de adicionar ao carrinho.');
                 return;
             }
@@ -898,12 +954,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (selectedStock === null) {
-                alert('Selecione tamanho e cor corretamente.');
-                return;
-            }
-
-            if (selectedStock <= 0) {
+            if (selectedStock === null || selectedStock <= 0) {
                 alert('Essa combinação está sem estoque.');
                 return;
             }
@@ -919,14 +970,21 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             cartColorInput.value = selectedColorName;
-            cartSizeInput.value = size;
+            cartSizeInput.value = selectedSize;
             cartQuantityInput.value = quantity;
 
             formAddCart.submit();
         });
     }
 
-    updateStockInfo();
+    if (freteBtn) {
+        freteBtn.addEventListener('click', function () {
+            const cep = document.getElementById('cep').value;
+            console.log('Calcular frete para CEP:', cep);
+        });
+    }
+
+    updateVariationUI();
 });
 </script>
 

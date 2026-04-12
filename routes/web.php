@@ -22,7 +22,6 @@ Route::get('/logout', [AccountController::class, 'logout'])->name('account.logou
 
 //Cart Controller
 Route::post('/cart/add', [CartController::class, 'addToCart'])->name('cart.add');
-
 Route::post('/cart/remove', [CartController::class, 'removeItem'])->name('cart.remove');
 
 //Pagamento Controller

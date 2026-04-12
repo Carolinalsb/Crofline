@@ -472,23 +472,31 @@
         .campo-input {
             display: flex;
             align-items: center;
+            width: 100%;
+            min-width: 0;
+            overflow: hidden;
             background-color: #ffffff;
             border-radius: 10px;
-            padding: 10px;
+            padding: 10px 12px;
             margin-bottom: 15px;
         }
 
         .campo-input i {
+            flex: 0 0 auto;
             margin-right: 10px;
             color: #543062;
             font-size: 1.2rem;
         }
 
         .campo-input input {
+            flex: 1 1 auto;
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
             border: none;
             outline: none;
-            flex: 1;
             font-size: 0.95rem;
+            background: transparent;
         }
 
         .campo-input input:focus {

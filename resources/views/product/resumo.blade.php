@@ -41,7 +41,7 @@
         gap: 8px;
         padding: 10px 14px;
         border-radius: 999px;
-        background: linear-gradient(90deg, rgba(123,44,191,.28), rgba(168,85,247,.22));
+        background: linear-gradient(90deg, rgba(76, 29, 149, .26), rgba(109, 40, 217, .22));
         border: 1px solid rgba(255,255,255,.08);
         color: #f7ecff;
         font-size: .88rem;
@@ -63,8 +63,8 @@
         border-radius: 24px;
         padding: 24px;
         background:
-            radial-gradient(circle at top right, rgba(255, 59, 157, 0.12), transparent 24%),
-            radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.18), transparent 28%),
+            radial-gradient(circle at top right, rgba(76, 29, 149, 0.16), transparent 24%),
+            radial-gradient(circle at bottom left, rgba(109, 40, 217, 0.18), transparent 28%),
             linear-gradient(135deg, rgba(22, 6, 43, 0.96), rgba(42, 11, 79, 0.96));
         border: 1px solid rgba(255,255,255,0.07);
         box-shadow: 0 18px 40px rgba(0,0,0,.32);
@@ -191,7 +191,7 @@
     }
 
     .resumo-tag i {
-        color: #ff7ed0;
+        color: #cda7ff;
     }
 
     .resumo-item-rodape {
@@ -215,7 +215,7 @@
     .resumo-item-valor {
         font-weight: 700;
         font-size: 1.15rem;
-        color: #ffd2ff;
+        color: #efe1ff;
         letter-spacing: .02em;
     }
 
@@ -225,7 +225,7 @@
         gap: 8px;
         padding: 10px 14px;
         border-radius: 14px;
-        background: linear-gradient(90deg, rgba(255, 59, 157, .12), rgba(168, 85, 247, .14));
+        background: linear-gradient(90deg, rgba(76, 29, 149, .18), rgba(109, 40, 217, .16));
         border: 1px solid rgba(255,255,255,.07);
         color: #fff;
         font-size: .88rem;
@@ -262,7 +262,7 @@
     }
 
     .resumo-total span:last-child {
-        color: #ffbdf1;
+        color: #efe1ff;
         font-size: 1.28rem;
     }
 
@@ -296,9 +296,9 @@
     }
 
     .btn-crofline-primary {
-        background: linear-gradient(90deg, #7b2cbf, #a855f7, #ff3b9d);
+        background: linear-gradient(90deg, #3b0764, #5b21b6, #6d28d9);
         color: #fff;
-        box-shadow: 0 10px 24px rgba(168,85,247,.28);
+        box-shadow: 0 10px 24px rgba(91, 33, 182, .28);
     }
 
     .btn-crofline-primary:hover {
@@ -383,9 +383,6 @@
                 @foreach($items as $item)
                     @php
                         $imagemFinal = '';
-                        $detalhesDecodificados = [];
-                        $corExibicao = $item['color'] ?? '';
-                        $tamanhoExibicao = $item['size'] ?? '';
 
                         if (!empty($item['image'])) {
                             if (is_string($item['image'])) {
@@ -404,26 +401,6 @@
                                 } else {
                                     $imagemFinal = $item['image'];
                                 }
-                            }
-                        }
-
-                        if (!empty($item['qtd_detalhes']) && is_string($item['qtd_detalhes'])) {
-                            $jsonDetalhes = json_decode($item['qtd_detalhes'], true);
-
-                            if (json_last_error() === JSON_ERROR_NONE && is_array($jsonDetalhes)) {
-                                $detalhesDecodificados = $jsonDetalhes;
-                            }
-                        }
-
-                        if ((empty($corExibicao) || empty($tamanhoExibicao)) && !empty($detalhesDecodificados)) {
-                            $primeiroDetalhe = $detalhesDecodificados[0] ?? [];
-
-                            if (empty($corExibicao) && !empty($primeiroDetalhe['cor'])) {
-                                $corExibicao = $primeiroDetalhe['cor'];
-                            }
-
-                            if (empty($tamanhoExibicao) && !empty($primeiroDetalhe['tamanho'])) {
-                                $tamanhoExibicao = $primeiroDetalhe['tamanho'];
                             }
                         }
                     @endphp
@@ -450,12 +427,12 @@
                                 <div class="resumo-tags">
                                     <div class="resumo-tag">
                                         <i class="bi bi-palette-fill"></i>
-                                        <span>Cor: {{ $corExibicao ?: 'Não informada' }}</span>
+                                        <span>Cor: {{ $item['color'] ?? 'Não informada' }}</span>
                                     </div>
 
                                     <div class="resumo-tag">
                                         <i class="bi bi-aspect-ratio-fill"></i>
-                                        <span>Tamanho: {{ $tamanhoExibicao ?: 'Não informado' }}</span>
+                                        <span>Tamanho: {{ $item['size'] ?? 'Não informado' }}</span>
                                     </div>
 
                                     <div class="resumo-tag">
@@ -499,33 +476,14 @@
                 <input type="hidden" name="total" value="{{ $subtotal }}">
 
                 @foreach($items as $index => $item)
-                    @php
-                        $corHidden = $item['color'] ?? '';
-                        $tamanhoHidden = $item['size'] ?? '';
-
-                        if ((empty($corHidden) || empty($tamanhoHidden)) && !empty($item['qtd_detalhes']) && is_string($item['qtd_detalhes'])) {
-                            $jsonDetalheHidden = json_decode($item['qtd_detalhes'], true);
-
-                            if (json_last_error() === JSON_ERROR_NONE && is_array($jsonDetalheHidden) && !empty($jsonDetalheHidden[0])) {
-                                if (empty($corHidden) && !empty($jsonDetalheHidden[0]['cor'])) {
-                                    $corHidden = $jsonDetalheHidden[0]['cor'];
-                                }
-
-                                if (empty($tamanhoHidden) && !empty($jsonDetalheHidden[0]['tamanho'])) {
-                                    $tamanhoHidden = $jsonDetalheHidden[0]['tamanho'];
-                                }
-                            }
-                        }
-                    @endphp
-
                     <input type="hidden" name="produtos[{{ $index }}][id_produto]"
                            value="{{ $item['product_id'] ?? $item['id'] ?? '' }}">
 
                     <input type="hidden" name="produtos[{{ $index }}][tamanho]"
-                           value="{{ $tamanhoHidden }}">
+                           value="{{ $item['size'] ?? '' }}">
 
                     <input type="hidden" name="produtos[{{ $index }}][cor]"
-                           value="{{ $corHidden }}">
+                           value="{{ $item['color'] ?? '' }}">
 
                     <input type="hidden" name="produtos[{{ $index }}][quantidade]"
                            value="{{ $item['quantity'] }}">

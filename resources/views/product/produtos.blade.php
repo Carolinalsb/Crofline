@@ -30,6 +30,7 @@
         position: relative;
         overflow: hidden;
         background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
     }
 
     .product-image {
@@ -53,7 +54,7 @@
         border-radius: 0;
         border: none;
         font-weight: 600;
-        background-color: rgba(128, 0, 128, 0.9);
+        background: linear-gradient(90deg, #3b0764, #5b21b6, #6d28d9);
         color: #fff;
         text-transform: uppercase;
         font-size: 14px;
@@ -80,6 +81,7 @@
         font-size: 15px;
         margin: 4px 0 0 0;
         font-weight: 600;
+        color: #f5ddff;
     }
 
     .products-empty {
@@ -112,25 +114,45 @@
         <div class="product-container">
             @foreach ($dados as $produto)
                 @php
-                    $imagensDecodificadas = json_decode($produto->imagem, true);
-                    $listaImagens = [];
+                    $detalhesBrutos = json_decode($produto->detalhes ?? '[]', true);
+                    $detalhesBrutos = is_array($detalhesBrutos) ? $detalhesBrutos : [];
 
-                    if (is_array($imagensDecodificadas)) {
-                        foreach ($imagensDecodificadas as $itemImagem) {
-                            if (is_array($itemImagem) && isset($itemImagem['imagem']) && !empty($itemImagem['imagem'])) {
-                                $listaImagens[] = $itemImagem['imagem'];
-                            } elseif (is_string($itemImagem) && !empty($itemImagem)) {
-                                $listaImagens[] = $itemImagem;
+                    $variacoes = [];
+
+                    foreach ($detalhesBrutos as $detalhe) {
+                        if (!is_array($detalhe)) {
+                            continue;
+                        }
+
+                        $valor = isset($detalhe['valor']) ? (float) $detalhe['valor'] : 0;
+
+                        $imagens = [];
+                        if (isset($detalhe['imagens']) && is_array($detalhe['imagens'])) {
+                            foreach (['imagem1', 'imagem2', 'imagem3', 'imagem4'] as $chaveImagem) {
+                                if (!empty($detalhe['imagens'][$chaveImagem])) {
+                                    $imagens[] = $detalhe['imagens'][$chaveImagem];
+                                }
                             }
                         }
+
+                        $variacoes[] = [
+                            'cor' => $detalhe['cor'] ?? '',
+                            'tamanho' => $detalhe['tamanho'] ?? '',
+                            'valor' => $valor,
+                            'imagens' => $imagens,
+                        ];
                     }
 
-                    if (empty($listaImagens) && !empty($produto->imagem)) {
-                        $listaImagens[] = $produto->imagem;
-                    }
+                    usort($variacoes, function ($a, $b) {
+                        return $a['valor'] <=> $b['valor'];
+                    });
 
-                    $imagemPrincipal = $listaImagens[0] ?? null;
-                    $imagemSecundaria = $listaImagens[1] ?? null;
+                    $variacaoMaisBarata = $variacoes[0] ?? null;
+                    $variacaoMaisCara = !empty($variacoes) ? $variacoes[count($variacoes) - 1] : null;
+
+                    $precoExibicao = $variacaoMaisBarata['valor'] ?? 0;
+                    $imagemPrincipal = $variacaoMaisCara['imagens'][0] ?? null;
+                    $imagemSecundaria = $variacaoMaisBarata['imagens'][0] ?? null;
                 @endphp
 
                 <div class="product-card">
@@ -159,7 +181,7 @@
                             {{ $produto->titulo }}
                         </p>
                         <p class="product-price">
-                            R$ {{ number_format($produto->valor, 2, ',', '.') }}
+                            R$ {{ number_format($precoExibicao, 2, ',', '.') }}
                         </p>
                     </div>
                 </div>
