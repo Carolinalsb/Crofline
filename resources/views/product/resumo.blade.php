@@ -71,28 +71,6 @@
         backdrop-filter: blur(10px);
     }
 
-    .resumo-card-produtos::before,
-    .resumo-card-resumo::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 18%, transparent 80%, rgba(255,255,255,.02));
-    }
-
-    .resumo-card-produtos h3,
-    .resumo-card-resumo h3 {
-        position: relative;
-        margin-bottom: 18px;
-        font-size: 1.08rem;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-        color: #fff;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
     .resumo-lista {
         display: flex;
         flex-direction: column;
@@ -111,7 +89,6 @@
     }
 
     .resumo-item-imagem-box {
-        position: relative;
         border-radius: 18px;
         overflow: hidden;
         min-height: 210px;
@@ -128,30 +105,6 @@
         min-height: 210px;
         object-fit: cover;
         display: block;
-        border-radius: 18px;
-    }
-
-    .resumo-item-coracao {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 34px;
-        height: 34px;
-        border-radius: 999px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(18, 6, 34, .55);
-        color: #fff;
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,.10);
-    }
-
-    .resumo-item-conteudo {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-width: 0;
     }
 
     .resumo-item-titulo {
@@ -186,76 +139,31 @@
         border: 1px solid rgba(255,255,255,.08);
         font-size: .83rem;
         color: #f8efff;
-        line-height: 1;
         white-space: nowrap;
-    }
-
-    .resumo-tag i {
-        color: #cda7ff;
-    }
-
-    .resumo-item-rodape {
-        display: flex;
-        align-items: end;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-top: 10px;
-    }
-
-    .resumo-item-preco-box small {
-        display: block;
-        color: rgba(255,255,255,.62);
-        margin-bottom: 4px;
-        font-size: .78rem;
-        letter-spacing: .06em;
-        text-transform: uppercase;
     }
 
     .resumo-item-valor {
         font-weight: 700;
         font-size: 1.15rem;
         color: #efe1ff;
-        letter-spacing: .02em;
     }
 
-    .resumo-qtd-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 14px;
-        border-radius: 14px;
-        background: linear-gradient(90deg, rgba(76, 29, 149, .18), rgba(109, 40, 217, .16));
-        border: 1px solid rgba(255,255,255,.07);
-        color: #fff;
-        font-size: .88rem;
-        font-weight: 600;
-    }
-
-    .resumo-linhas {
-        font-size: .96rem;
-        margin-top: 2px;
-    }
-
-    .resumo-linha {
+    .resumo-linha,
+    .resumo-total {
         display: flex;
         justify-content: space-between;
         gap: 16px;
-        margin-bottom: 12px;
-        color: rgba(255,255,255,.86);
     }
 
-    .resumo-linha span:first-child {
-        color: rgba(255,255,255,.68);
+    .resumo-linha {
+        margin-bottom: 12px;
+        color: rgba(255,255,255,.86);
     }
 
     .resumo-total {
         margin-top: 18px;
         padding-top: 16px;
         border-top: 1px solid rgba(255,255,255,.10);
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
         align-items: center;
         font-size: 1.12rem;
         font-weight: 700;
@@ -288,7 +196,7 @@
         font-weight: 700;
         font-size: 0.88rem;
         cursor: pointer;
-        transition: transform .18s ease, filter .18s ease, background .18s ease;
+        transition: transform .18s ease, filter .18s ease;
     }
 
     .btn-crofline:hover {
@@ -296,23 +204,14 @@
     }
 
     .btn-crofline-primary {
-        background: linear-gradient(90deg, #3b0764, #5b21b6, #6d28d9);
+        background: #751597;
         color: #fff;
-        box-shadow: 0 10px 24px rgba(91, 33, 182, .28);
-    }
-
-    .btn-crofline-primary:hover {
-        filter: brightness(1.05);
     }
 
     .btn-crofline-secondary {
         background: transparent;
         color: #fff;
         border: 1px solid rgba(255,255,255,.12);
-    }
-
-    .btn-crofline-secondary:hover {
-        background: rgba(255,255,255,.05);
     }
 
     @media (max-width: 980px) {
@@ -329,24 +228,6 @@
 
         .resumo-item {
             grid-template-columns: 1fr;
-        }
-
-        .resumo-item-imagem-box {
-            min-height: 300px;
-        }
-
-        .resumo-item-imagem-box img {
-            min-height: 300px;
-        }
-
-        .resumo-card-produtos,
-        .resumo-card-resumo {
-            padding: 18px;
-            border-radius: 20px;
-        }
-
-        .resumo-topo {
-            align-items: flex-start;
         }
     }
 </style>
@@ -374,86 +255,44 @@
     <div class="resumo-grid">
 
         <div class="resumo-card-produtos">
-            <h3>
-                <i class="bi bi-stars"></i>
-                Produtos selecionados
-            </h3>
+            <h3><i class="bi bi-stars"></i> Produtos selecionados</h3>
 
             <div class="resumo-lista">
                 @foreach($items as $item)
-                    @php
-                        $imagemFinal = '';
-
-                        if (!empty($item['image'])) {
-                            if (is_string($item['image'])) {
-                                $jsonImagem = json_decode($item['image'], true);
-
-                                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonImagem)) {
-                                    foreach ($jsonImagem as $imgItem) {
-                                        if (is_array($imgItem) && !empty($imgItem['imagem'])) {
-                                            $imagemFinal = $imgItem['imagem'];
-                                            break;
-                                        } elseif (is_string($imgItem) && !empty($imgItem)) {
-                                            $imagemFinal = $imgItem;
-                                            break;
-                                        }
-                                    }
-                                } else {
-                                    $imagemFinal = $item['image'];
-                                }
-                            }
-                        }
-                    @endphp
-
                     <div class="resumo-item">
                         <div class="resumo-item-imagem-box">
                             <img
-                                src="{{ !empty($imagemFinal) ? asset('img/' . $imagemFinal) : asset('img/sem-imagem.png') }}"
+                                src="{{ !empty($item['image']) ? asset('img/' . $item['image']) : asset('img/sem-imagem.png') }}"
                                 alt="{{ $item['title'] }}"
                             >
-                            <div class="resumo-item-coracao">
-                                <i class="bi bi-heart-fill"></i>
-                            </div>
                         </div>
 
-                        <div class="resumo-item-conteudo">
-                            <div>
-                                <div class="resumo-item-titulo">{{ $item['title'] }}</div>
+                        <div>
+                            <div class="resumo-item-titulo">{{ $item['title'] }}</div>
 
-                                @if(!empty($item['description']))
-                                    <div class="resumo-item-descricao">{{ $item['description'] }}</div>
-                                @endif
+                            @if(!empty($item['description']))
+                                <div class="resumo-item-descricao">{{ $item['description'] }}</div>
+                            @endif
 
-                                <div class="resumo-tags">
-                                    <div class="resumo-tag">
-                                        <i class="bi bi-palette-fill"></i>
-                                        <span>Cor: {{ $item['color'] ?? 'Não informada' }}</span>
-                                    </div>
+                            <div class="resumo-tags">
+                                <div class="resumo-tag">
+                                    <i class="bi bi-palette-fill"></i>
+                                    <span>Cor: {{ $item['color'] ?? 'Não informada' }}</span>
+                                </div>
 
-                                    <div class="resumo-tag">
-                                        <i class="bi bi-aspect-ratio-fill"></i>
-                                        <span>Tamanho: {{ $item['size'] ?? 'Não informado' }}</span>
-                                    </div>
+                                <div class="resumo-tag">
+                                    <i class="bi bi-aspect-ratio-fill"></i>
+                                    <span>Tamanho: {{ $item['size'] ?? 'Não informado' }}</span>
+                                </div>
 
-                                    <div class="resumo-tag">
-                                        <i class="bi bi-box-seam"></i>
-                                        <span>Quantidade: {{ $item['quantity'] }}</span>
-                                    </div>
+                                <div class="resumo-tag">
+                                    <i class="bi bi-box-seam"></i>
+                                    <span>Quantidade: {{ $item['quantity'] }}</span>
                                 </div>
                             </div>
 
-                            <div class="resumo-item-rodape">
-                                <div class="resumo-item-preco-box">
-                                    <small>Valor do item</small>
-                                    <div class="resumo-item-valor">
-                                        R$ {{ number_format($item['total_value'], 2, ',', '.') }}
-                                    </div>
-                                </div>
-
-                                <div class="resumo-qtd-badge">
-                                    <i class="bi bi-check2-circle"></i>
-                                    <span>Pronto para compra</span>
-                                </div>
+                            <div class="resumo-item-valor">
+                                R$ {{ number_format($item['total_value'], 2, ',', '.') }}
                             </div>
                         </div>
                     </div>
@@ -462,34 +301,20 @@
         </div>
 
         <div class="resumo-card-resumo">
-            <h3>
-                <i class="bi bi-receipt-cutoff"></i>
-                Resumo
-            </h3>
+            <h3><i class="bi bi-receipt-cutoff"></i> Resumo</h3>
 
             <form action="{{ route('pagamento.pagar') }}" method="POST">
                 @csrf
 
-                <input type="hidden" name="id_usuario"
-                       value="{{ session('id_usuario') ?? session('user_id') }}">
-
+                <input type="hidden" name="id_usuario" value="{{ session('id_usuario') ?? session('user_id') }}">
                 <input type="hidden" name="total" value="{{ $subtotal }}">
 
                 @foreach($items as $index => $item)
-                    <input type="hidden" name="produtos[{{ $index }}][id_produto]"
-                           value="{{ $item['product_id'] ?? $item['id'] ?? '' }}">
-
-                    <input type="hidden" name="produtos[{{ $index }}][tamanho]"
-                           value="{{ $item['size'] ?? '' }}">
-
-                    <input type="hidden" name="produtos[{{ $index }}][cor]"
-                           value="{{ $item['color'] ?? '' }}">
-
-                    <input type="hidden" name="produtos[{{ $index }}][quantidade]"
-                           value="{{ $item['quantity'] }}">
-
-                    <input type="hidden" name="produtos[{{ $index }}][valor]"
-                           value="{{ $item['total_value'] }}">
+                    <input type="hidden" name="produtos[{{ $index }}][id_produto]" value="{{ $item['product_id'] ?? '' }}">
+                    <input type="hidden" name="produtos[{{ $index }}][tamanho]" value="{{ $item['size'] ?? '' }}">
+                    <input type="hidden" name="produtos[{{ $index }}][cor]" value="{{ $item['color'] ?? '' }}">
+                    <input type="hidden" name="produtos[{{ $index }}][quantidade]" value="{{ $item['quantity'] }}">
+                    <input type="hidden" name="produtos[{{ $index }}][valor]" value="{{ $item['total_value'] }}">
                 @endforeach
 
                 <div class="resumo-linhas">
@@ -523,9 +348,7 @@
                     Finalizar compra
                 </button>
 
-                <button type="button"
-                        class="btn-crofline btn-crofline-secondary"
-                        onclick="window.history.back();">
+                <button type="button" class="btn-crofline btn-crofline-secondary" onclick="window.history.back();">
                     <i class="bi bi-arrow-left-circle-fill"></i>
                     Continuar comprando
                 </button>

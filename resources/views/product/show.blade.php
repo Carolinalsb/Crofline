@@ -55,6 +55,7 @@
         $cor = trim($detalhe['cor'] ?? '');
         $tamanho = trim($detalhe['tamanho'] ?? '');
         $valor = isset($detalhe['valor']) ? (float) $detalhe['valor'] : 0;
+        $qtd = isset($detalhe['qtd']) ? (int) $detalhe['qtd'] : 0;
 
         $imagens = [];
         if (isset($detalhe['imagens']) && is_array($detalhe['imagens'])) {
@@ -71,6 +72,7 @@
             'cor_key' => mb_strtolower($cor),
             'tamanho' => $tamanho,
             'valor' => $valor,
+            'qtd' => $qtd,
             'imagens' => $imagens,
         ];
 
@@ -92,19 +94,11 @@
         'cor_key' => '',
         'tamanho' => '',
         'valor' => 0,
+        'qtd' => 0,
         'imagens' => [],
     ];
 
     $coresLista = array_values($coresUnicas);
-
-    $estoqueCombinacoes = [];
-    foreach ($variacoes as $variacao) {
-        $chave = $variacao['cor_key'] . '||' . mb_strtolower($variacao['tamanho']);
-        if (!isset($estoqueCombinacoes[$chave])) {
-            $estoqueCombinacoes[$chave] = 0;
-        }
-        $estoqueCombinacoes[$chave]++;
-    }
 @endphp
 
 <style>
@@ -130,7 +124,8 @@
     }
 
     .product-gallery,
-    .product-info-panel {
+    .product-info-panel,
+    .product-description-left {
         position: relative;
         border-radius: 28px;
         overflow: hidden;
@@ -143,6 +138,12 @@
 
     .product-gallery {
         padding: 18px;
+    }
+
+    .product-gallery-column {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
     }
 
     .product-gallery-main {
@@ -201,15 +202,6 @@
         justify-content: center;
     }
 
-    .product-main-image-wrapper::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background:
-            linear-gradient(to bottom, rgba(255,255,255,0.04), transparent 18%, transparent 80%, rgba(255,255,255,0.02));
-    }
-
     .product-main-image {
         width: 100%;
         height: 100%;
@@ -218,26 +210,32 @@
         background: rgba(255,255,255,0.015);
     }
 
+    .product-description-left {
+        padding: 18px 20px;
+    }
+
+    .product-description-title {
+        display: block;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: rgba(255,255,255,0.82);
+        margin-bottom: 10px;
+    }
+
+    .product-description-text {
+        font-size: 0.95rem;
+        line-height: 1.65;
+        color: rgba(255,255,255,0.94);
+        white-space: pre-line;
+        margin: 0;
+    }
+
     .product-info-panel {
         padding: 28px 28px 30px;
         display: flex;
         flex-direction: column;
         gap: 20px;
-    }
-
-    .product-mini-category {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        width: fit-content;
-        padding: 8px 14px;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.07);
-        font-size: 0.78rem;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #f5ddff;
     }
 
     .product-title-main {
@@ -342,10 +340,6 @@
         gap: 10px;
     }
 
-    .product-color-stock.hidden {
-        display: none;
-    }
-
     .product-color-stock-pill {
         display: inline-flex;
         align-items: center;
@@ -354,7 +348,7 @@
         min-height: 26px;
         padding: 0 10px;
         border-radius: 999px;
-        background: linear-gradient(90deg, #4c1d95, #6d28d9, #7b2cbf);
+        background: #751597;
         font-size: 12px;
         font-weight: 800;
         color: #fff;
@@ -409,7 +403,6 @@
         color: rgba(255,255,255,0.74);
     }
 
-    .product-description-block,
     .product-freight-block {
         padding: 16px 18px;
         border-radius: 18px;
@@ -417,48 +410,33 @@
         border: 1px solid rgba(255,255,255,0.07);
     }
 
-    .product-description-title {
-        display: block;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: rgba(255,255,255,0.82);
-        margin-bottom: 10px;
+    .product-action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .product-description-text {
-        font-size: 0.95rem;
-        line-height: 1.65;
-        color: rgba(255,255,255,0.94);
-        white-space: pre-line;
-        margin: 0;
-    }
-
-    .product-buy-main-btn {
+    .product-cart-btn,
+    .product-buy-main-btn,
+    .product-freight-row button {
         width: 100%;
         border: none;
         border-radius: 999px;
         padding: 14px 20px;
-        background: linear-gradient(90deg, #3b0764, #5b21b6, #6d28d9);
+        background: #751597;
         color: #ffffff;
         font-weight: 800;
         font-size: 0.95rem;
         text-transform: uppercase;
         letter-spacing: 0.10em;
-        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-        box-shadow: 0 14px 28px rgba(91, 33, 182, 0.24);
+        transition: transform 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
     }
 
-    .product-buy-main-btn:hover {
+    .product-cart-btn:hover,
+    .product-buy-main-btn:hover,
+    .product-freight-row button:hover {
         transform: translateY(-1px);
-        opacity: 0.97;
-        box-shadow: 0 18px 34px rgba(91, 33, 182, 0.30);
-    }
-
-    .product-buy-main-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        box-shadow: none;
+        filter: brightness(1.06);
     }
 
     .product-freight-row {
@@ -473,25 +451,6 @@
         color: #fff;
         border-radius: 14px;
         padding: 12px 14px;
-    }
-
-    .product-freight-row button {
-        white-space: nowrap;
-        border-radius: 999px;
-        padding: 10px 18px;
-        border: none;
-        background: linear-gradient(90deg, #4c1d95, #5b21b6, #6d28d9);
-        color: #fff;
-        font-weight: 700;
-        font-size: 0.82rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        transition: transform 0.15s ease, filter 0.15s ease;
-    }
-
-    .product-freight-row button:hover {
-        filter: brightness(1.08);
-        transform: translateY(-1px);
     }
 
     @media (max-width: 1020px) {
@@ -572,29 +531,29 @@
 <section class="product-page">
     <div class="product-grid">
 
-        <div class="product-gallery">
-            <div class="product-gallery-main">
-                <div class="product-thumbs" id="product-thumbs"></div>
+        <div class="product-gallery-column">
+            <div class="product-gallery">
+                <div class="product-gallery-main">
+                    <div class="product-thumbs" id="product-thumbs"></div>
 
-                <div class="product-main-image-wrapper">
-                    <img
-                        id="product-main-image"
-                        class="product-main-image"
-                        src="{{ !empty($primeiraVariacao['imagens'][0]) ? asset('img/' . $primeiraVariacao['imagens'][0]) : asset('img/sem-imagem.png') }}"
-                        alt="{{ $produto->titulo }}"
-                    >
+                    <div class="product-main-image-wrapper">
+                        <img
+                            id="product-main-image"
+                            class="product-main-image"
+                            src="{{ !empty($primeiraVariacao['imagens'][0]) ? asset('img/' . $primeiraVariacao['imagens'][0]) : asset('img/sem-imagem.png') }}"
+                            alt="{{ $produto->titulo }}"
+                        >
+                    </div>
                 </div>
+            </div>
+
+            <div class="product-description-left">
+                <span class="product-description-title">Descrição</span>
+                <p class="product-description-text">{{ $produto->descricao }}</p>
             </div>
         </div>
 
         <div class="product-info-panel">
-
-            <div>
-                <span class="product-mini-category">
-                    <i class="bi bi-stars"></i>
-                    {{ $produto->categorias }}
-                </span>
-            </div>
 
             <div>
                 <h1 class="product-title-main">{{ $produto->titulo }}</h1>
@@ -660,26 +619,31 @@
                 </div>
             </div>
 
-            <div class="product-description-block">
-                <span class="product-description-title">Descrição</span>
-                <p class="product-description-text">{{ $produto->descricao }}</p>
-            </div>
-
             <form id="form-add-cart" method="POST" action="{{ route('cart.add') }}">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $produto->id }}">
                 <input type="hidden" name="color" id="cart-color">
                 <input type="hidden" name="size" id="cart-size">
                 <input type="hidden" name="quantity" id="cart-quantity">
+                <input type="hidden" name="mode" id="cart-mode" value="cart">
 
-                <button
-                    type="button"
-                    class="product-buy-main-btn"
-                    id="btn-buy"
-                    data-product-id="{{ $produto->id }}"
-                >
-                    Comprar
-                </button>
+                <div class="product-action-buttons">
+                    <button
+                        type="button"
+                        class="product-cart-btn"
+                        id="btn-add-cart"
+                    >
+                        Adicionar ao carrinho
+                    </button>
+
+                    <button
+                        type="button"
+                        class="product-buy-main-btn"
+                        id="btn-buy-now"
+                    >
+                        Comprar agora
+                    </button>
+                </div>
             </form>
 
             <div class="product-freight-block">
@@ -704,7 +668,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const variacoes = @json($variacoes);
-    const estoqueCombinacoes = @json($estoqueCombinacoes);
 
     const mainImg = document.getElementById('product-main-image');
     const thumbsContainer = document.getElementById('product-thumbs');
@@ -713,7 +676,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectTamanho = document.getElementById('select-tamanho');
     const colorDots = document.querySelectorAll('.product-color-dot');
 
-    const stockBox = document.getElementById('product-color-stock');
     const stockPill = document.getElementById('product-color-stock-pill');
     const stockLabel = document.getElementById('product-color-stock-label');
 
@@ -722,11 +684,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const qtyPlus = document.getElementById('qty-plus');
     const qtyHint = document.getElementById('product-quantity-hint');
 
-    const buyBtn = document.getElementById('btn-buy');
     const formAddCart = document.getElementById('form-add-cart');
     const cartColorInput = document.getElementById('cart-color');
     const cartSizeInput = document.getElementById('cart-size');
     const cartQuantityInput = document.getElementById('cart-quantity');
+    const cartModeInput = document.getElementById('cart-mode');
+
+    const btnAddCart = document.getElementById('btn-add-cart');
+    const btnBuyNow = document.getElementById('btn-buy-now');
 
     const freteBtn = document.getElementById('btn-calcular-frete');
 
@@ -734,17 +699,13 @@ document.addEventListener('DOMContentLoaded', function () {
     let selectedColorName = @json($primeiraVariacao['cor'] ?? '');
     let selectedSize = @json($primeiraVariacao['tamanho'] ?? '');
     let currentVariation = variacoes.length ? variacoes[0] : null;
-    let selectedStock = null;
+    let selectedStock = parseInt(@json($primeiraVariacao['qtd'] ?? 0), 10) || 0;
 
     function formatCurrency(value) {
         return Number(value || 0).toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL'
         });
-    }
-
-    function getCombinationKey(corKey, tamanho) {
-        return String(corKey).toLowerCase() + '||' + String(tamanho).toLowerCase();
     }
 
     function getVariationByColorAndSize(corKey, tamanho) {
@@ -759,33 +720,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }) || null;
     }
 
-    function getFirstVariationBySize(tamanho) {
-        return variacoes.find(function (variacao) {
-            return variacao.tamanho === tamanho;
-        }) || null;
-    }
-
     function renderThumbs(images) {
         if (!thumbsContainer) return;
 
         thumbsContainer.innerHTML = '';
 
-        const lista = Array.isArray(images) && images.length ? images : ['{{ asset('img/sem-imagem.png') }}'];
+        const fallbackImage = '{{ asset('img/sem-imagem.png') }}';
+        const lista = Array.isArray(images) && images.length ? images : [fallbackImage];
 
         lista.forEach(function (imgSrc, index) {
+            const finalSrc = imgSrc.startsWith('http') ? imgSrc : ('{{ asset('img') }}/' + imgSrc);
+
             const thumb = document.createElement('div');
             thumb.className = 'product-thumb' + (index === 0 ? ' active' : '');
-            thumb.setAttribute('data-image', '{{ asset('img') }}/' + imgSrc);
+            thumb.setAttribute('data-image', finalSrc);
 
             const img = document.createElement('img');
-            img.src = '{{ asset('img') }}/' + imgSrc;
+            img.src = finalSrc;
             img.alt = 'Imagem ' + (index + 1) + ' de {{ $produto->titulo }}';
 
             thumb.appendChild(img);
             thumbsContainer.appendChild(thumb);
 
             thumb.addEventListener('click', function () {
-                mainImg.src = img.src;
+                mainImg.src = finalSrc;
                 thumbsContainer.querySelectorAll('.product-thumb').forEach(function (t) {
                     t.classList.remove('active');
                 });
@@ -793,45 +751,38 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
-        mainImg.src = '{{ asset('img') }}/' + lista[0];
+        const firstSrc = lista[0].startsWith('http') ? lista[0] : ('{{ asset('img') }}/' + lista[0]);
+        mainImg.src = firstSrc;
     }
 
     function updateStockInfo() {
-        if (!selectedColorKey || !selectedSize) {
-            selectedStock = null;
-
-            if (stockBox) stockBox.classList.remove('hidden');
-            if (stockPill) stockPill.textContent = '-';
-            if (stockLabel) stockLabel.textContent = 'Selecione tamanho e cor para ver a quantidade disponível.';
-            qtyHint.textContent = 'Selecione tamanho e cor para ver o estoque disponível.';
+        if (!currentVariation) {
+            selectedStock = 0;
+            stockPill.textContent = '0';
+            stockLabel.textContent = 'Variação indisponível.';
+            qtyHint.textContent = 'Variação indisponível.';
             qtyInput.value = 1;
             qtyInput.min = 1;
-            qtyInput.removeAttribute('max');
+            qtyInput.max = 1;
             return;
         }
 
-        const combinationKey = getCombinationKey(selectedColorKey, selectedSize);
-        selectedStock = parseInt(estoqueCombinacoes[combinationKey] || 0, 10);
+        selectedStock = parseInt(currentVariation.qtd || 0, 10);
 
-        if (stockBox) stockBox.classList.remove('hidden');
-
-        if (!selectedStock || selectedStock <= 0) {
-            if (stockPill) stockPill.textContent = '0';
-            if (stockLabel) stockLabel.textContent = `Cor ${selectedColorName} no tamanho ${selectedSize}: esgotado.`;
+        if (selectedStock <= 0) {
+            stockPill.textContent = '0';
+            stockLabel.textContent = `Cor ${selectedColorName} no tamanho ${selectedSize}: esgotado.`;
             qtyHint.textContent = `Combinação ${selectedColorName} / ${selectedSize} indisponível.`;
             qtyInput.value = 1;
             qtyInput.min = 1;
             qtyInput.max = 1;
-            buyBtn.disabled = true;
             return;
         }
 
-        if (stockPill) stockPill.textContent = selectedStock;
-        if (stockLabel) {
-            stockLabel.textContent =
-                `Cor ${selectedColorName} no tamanho ${selectedSize}: ${selectedStock} ` +
-                `${selectedStock === 1 ? 'unidade disponível' : 'unidades disponíveis'}.`;
-        }
+        stockPill.textContent = selectedStock;
+        stockLabel.textContent =
+            `Cor ${selectedColorName} no tamanho ${selectedSize}: ${selectedStock} ` +
+            `${selectedStock === 1 ? 'unidade disponível' : 'unidades disponíveis'}.`;
 
         qtyHint.textContent =
             `Você pode comprar até ${selectedStock} ${selectedStock === 1 ? 'unidade' : 'unidades'} dessa combinação.`;
@@ -843,8 +794,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isNaN(current) || current < 1) current = 1;
         if (current > selectedStock) current = selectedStock;
         qtyInput.value = current;
-
-        buyBtn.disabled = false;
     }
 
     function updateVariationUI() {
@@ -858,23 +807,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        if (!variation && selectedSize) {
-            variation = getFirstVariationBySize(selectedSize);
-            if (variation) {
-                selectedColorKey = variation.cor_key;
-                selectedColorName = variation.cor;
-            }
-        }
-
-        if (!variation && variacoes.length) {
-            variation = variacoes[0];
-            selectedColorKey = variation.cor_key;
-            selectedColorName = variation.cor;
-            selectedSize = variation.tamanho;
-
-            if (selectTamanho) selectTamanho.value = variation.tamanho;
-        }
-
         currentVariation = variation;
 
         colorDots.forEach(function (dot) {
@@ -883,15 +815,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (currentVariation) {
             selectedColorName = currentVariation.cor;
-            if (priceEl) {
-                priceEl.textContent = formatCurrency(currentVariation.valor);
-            }
+            selectedSize = currentVariation.tamanho;
+            priceEl.textContent = formatCurrency(currentVariation.valor);
             renderThumbs(currentVariation.imagens || []);
-        } else {
-            if (priceEl) {
-                priceEl.textContent = formatCurrency(0);
-            }
-            renderThumbs([]);
         }
 
         updateStockInfo();
@@ -912,70 +838,73 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (qtyMinus && qtyPlus && qtyInput) {
-        qtyMinus.addEventListener('click', function () {
-            let val = parseInt(qtyInput.value || '1', 10);
-            if (isNaN(val) || val < 1) val = 1;
-            if (val > 1) val--;
-            qtyInput.value = val;
-        });
+    qtyMinus.addEventListener('click', function () {
+        let val = parseInt(qtyInput.value || '1', 10);
+        if (isNaN(val) || val <= 1) {
+            qtyInput.value = 1;
+            return;
+        }
+        qtyInput.value = val - 1;
+    });
 
-        qtyPlus.addEventListener('click', function () {
-            let val = parseInt(qtyInput.value || '1', 10);
-            if (isNaN(val) || val < 1) val = 1;
+    qtyPlus.addEventListener('click', function () {
+        let val = parseInt(qtyInput.value || '1', 10);
+        if (isNaN(val) || val < 1) val = 1;
+        if (val < selectedStock) {
+            qtyInput.value = val + 1;
+        }
+    });
 
-            let max = selectedStock !== null ? selectedStock : 1;
-            if (val < max) val++;
-            qtyInput.value = val;
-        });
+    qtyInput.addEventListener('input', function () {
+        let val = parseInt(qtyInput.value || '1', 10);
+        if (isNaN(val) || val < 1) val = 1;
+        if (selectedStock > 0 && val > selectedStock) val = selectedStock;
+        qtyInput.value = val;
+    });
 
-        qtyInput.addEventListener('input', function () {
-            let val = parseInt(qtyInput.value || '1', 10);
-            if (isNaN(val) || val < 1) val = 1;
+    function submitCart(mode) {
+        const quantity = parseInt(qtyInput.value || '1', 10);
 
-            let max = selectedStock !== null ? selectedStock : 1;
-            if (val > max) val = max;
+        if (!selectedSize) {
+            alert('Selecione um tamanho antes de continuar.');
+            return;
+        }
 
-            qtyInput.value = val;
-        });
+        if (!selectedColorName) {
+            alert('Selecione uma cor antes de continuar.');
+            return;
+        }
+
+        if (!currentVariation || selectedStock <= 0) {
+            alert('Essa combinação está sem estoque.');
+            return;
+        }
+
+        if (isNaN(quantity) || quantity <= 0) {
+            alert('Informe uma quantidade válida.');
+            return;
+        }
+
+        if (quantity > selectedStock) {
+            alert('Quantidade selecionada maior que o estoque disponível.');
+            return;
+        }
+
+        cartColorInput.value = selectedColorName;
+        cartSizeInput.value = selectedSize;
+        cartQuantityInput.value = quantity;
+        cartModeInput.value = mode;
+
+        formAddCart.submit();
     }
 
-    if (buyBtn && formAddCart && cartColorInput && cartSizeInput && cartQuantityInput) {
-        buyBtn.addEventListener('click', function () {
-            const quantity = parseInt(qtyInput.value || '1', 10);
+    btnAddCart.addEventListener('click', function () {
+        submitCart('cart');
+    });
 
-            if (!selectedSize) {
-                alert('Selecione um tamanho antes de adicionar ao carrinho.');
-                return;
-            }
-
-            if (!selectedColorName) {
-                alert('Selecione uma cor antes de adicionar ao carrinho.');
-                return;
-            }
-
-            if (selectedStock === null || selectedStock <= 0) {
-                alert('Essa combinação está sem estoque.');
-                return;
-            }
-
-            if (isNaN(quantity) || quantity <= 0) {
-                alert('Informe uma quantidade válida.');
-                return;
-            }
-
-            if (quantity > selectedStock) {
-                alert('Quantidade selecionada maior que o estoque disponível.');
-                return;
-            }
-
-            cartColorInput.value = selectedColorName;
-            cartSizeInput.value = selectedSize;
-            cartQuantityInput.value = quantity;
-
-            formAddCart.submit();
-        });
-    }
+    btnBuyNow.addEventListener('click', function () {
+        submitCart('buy_now');
+    });
 
     if (freteBtn) {
         freteBtn.addEventListener('click', function () {

@@ -766,8 +766,8 @@
         }
 
         .cart-primary-btn {
-            background: linear-gradient(90deg, #7b2cbf, #a855f7);
-            color: #fff;
+             background: #751597;
+             color: #fff;
         }
 
         .cart-primary-btn:hover {
@@ -1060,81 +1060,111 @@
     </form>
 
     {{-- CARRINHO GLOBAL (DRAWER) --}}
-    <div id="cart-overlay" class="cart-overlay">
-        <div class="cart-drawer">
-            <div class="cart-header">
-                <h3>Carrinho</h3>
-                <button type="button" class="cart-close-btn" id="cart-close-btn">&times;</button>
-            </div>
+<div id="cart-overlay" class="cart-overlay">
+    <div class="cart-drawer">
+        <div class="cart-header">
+            <h3>Carrinho</h3>
+            <button type="button" class="cart-close-btn" id="cart-close-btn">&times;</button>
+        </div>
 
-            <div class="cart-items" id="cart-items">
-                @if(count($cartItems) === 0)
-                    <p style="font-size:13px; opacity:0.8;">Seu carrinho está vazio.</p>
-                @else
-                    @foreach($cartItems as $key => $item)
-                        <div class="cart-item">
-                            <div class="d-flex justify-content-center">
-                                <input type="checkbox"
-                                       class="form-check-input"
-                                       name="selected_items[]"
-                                       value="{{ $key }}"
-                                       form="cart-resumo-form">
-                            </div>
-
-                            <img src="{{ asset('img/' . $item['image']) }}" alt="{{ $item['title'] }}">
-
-                            <div>
-                                <div class="cart-item-title">{{ $item['title'] }}</div>
-                                <div class="cart-item-meta">
-                                    Tamanho: {{ $item['size'] }} &nbsp;|&nbsp;
-                                    Cor: {{ $item['color'] }}
-                                </div>
-                                <div class="cart-item-meta">
-                                    Quantidade: {{ $item['quantity'] }}
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center mt-1">
-                                    <div class="cart-item-price">
-                                        R$ {{ number_format($item['total_value'], 2, ',', '.') }}
-                                    </div>
-
-                                    <button type="submit"
-                                            form="cart-remove-{{ $key }}"
-                                            class="btn btn-link p-0"
-                                            style="font-size:11px;color:#ff9b9b;text-decoration:underline;">
-                                        remover
-                                    </button>
-                                </div>
-                            </div>
+        <div class="cart-items" id="cart-items">
+            @if(count($cartItems) === 0)
+                <p style="font-size:13px; opacity:0.8;">Seu carrinho está vazio.</p>
+            @else
+                @foreach($cartItems as $key => $item)
+                    <div class="cart-item" style="grid-template-columns: 24px 64px 1fr; gap: 10px;">
+                        <div class="d-flex justify-content-center">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   name="selected_items[]"
+                                   value="{{ $key }}"
+                                   form="cart-resumo-form">
                         </div>
 
-                        <form id="cart-remove-{{ $key }}" method="POST" action="{{ route('cart.remove') }}" style="display:none;">
-                            @csrf
-                            <input type="hidden" name="key" value="{{ $key }}">
-                        </form>
-                    @endforeach
-                @endif
+                        <img src="{{ !empty($item['image']) ? asset('img/' . $item['image']) : asset('img/sem-imagem.png') }}"
+                             alt="{{ $item['title'] }}">
+
+                        <div>
+                            <div class="cart-item-title">{{ $item['title'] }}</div>
+
+                            <div class="cart-item-meta">
+                                Tamanho: {{ $item['size'] }} &nbsp;|&nbsp; Cor: {{ $item['color'] }}
+                            </div>
+
+                            <div class="cart-item-meta">
+                                Unitário: R$ {{ number_format($item['unit_price'], 2, ',', '.') }}
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2 mt-2 mb-2">
+                                <form method="POST" action="{{ route('cart.update') }}" style="display:inline;">
+                                    @csrf
+                                    <input type="hidden" name="key" value="{{ $key }}">
+                                    <input type="hidden" name="quantity" value="{{ max(1, $item['quantity'] - 1) }}">
+                                    <button type="submit"
+                                            style="width:26px;height:26px;border:none;border-radius:999px;background:#751597;color:#fff;">
+                                        -
+                                    </button>
+                                </form>
+
+                                <span style="font-size:12px; min-width:24px; text-align:center;">
+                                    {{ $item['quantity'] }}
+                                </span>
+
+                                <form method="POST" action="{{ route('cart.update') }}" style="display:inline;">
+                                    @csrf
+                                    <input type="hidden" name="key" value="{{ $key }}">
+                                    <input type="hidden" name="quantity" value="{{ min(($item['stock'] ?? $item['quantity']), $item['quantity'] + 1) }}">
+                                    <button type="submit"
+                                            style="width:26px;height:26px;border:none;border-radius:999px;background:#751597;color:#fff;">
+                                        +
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                <div class="cart-item-price">
+                                    R$ {{ number_format($item['total_value'], 2, ',', '.') }}
+                                </div>
+
+                                <button type="submit"
+                                        form="cart-remove-{{ $key }}"
+                                        class="btn btn-link p-0"
+                                        style="font-size:11px;color:#ff9b9b;text-decoration:underline;">
+                                    remover
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="cart-remove-{{ $key }}" method="POST" action="{{ route('cart.remove') }}" style="display:none;">
+                        @csrf
+                        <input type="hidden" name="key" value="{{ $key }}">
+                    </form>
+                @endforeach
+            @endif
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total-row">
+                <span>Total</span>
+                <span id="cart-total">
+                    R$ {{ number_format($cartTotal, 2, ',', '.') }}
+                </span>
             </div>
 
-            <div class="cart-footer">
-                <div class="cart-total-row">
-                    <span>Total</span>
-                    <span id="cart-total">
-                        R$ {{ number_format($cartTotal, 2, ',', '.') }}
-                    </span>
-                </div>
-                <button type="submit"
-                        class="cart-primary-btn"
-                        id="cart-checkout"
-                        form="cart-resumo-form">
-                    Finalizar compra
-                </button>
-                <button type="button" class="cart-secondary-btn" id="cart-continue">
-                    Continuar comprando
-                </button>
-            </div>
+            <button type="submit"
+                    class="cart-primary-btn"
+                    id="cart-checkout"
+                    form="cart-resumo-form">
+                Finalizar compra
+            </button>
+
+            <button type="button" class="cart-secondary-btn" id="cart-continue">
+                Continuar comprando
+            </button>
         </div>
     </div>
+</div>
 
     {{-- POPUP CONTA DO USUÁRIO (QUANDO LOGADO) --}}
     <div id="user-popup-overlay" class="user-popup-overlay">

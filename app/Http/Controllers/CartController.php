@@ -9,61 +9,125 @@ class CartController extends Controller
 {
     public function addToCart(Request $request)
     {
-        // Validação básica do que vem da página show
         $data = $request->validate([
             'product_id' => 'required|integer|exists:produtos,id',
             'color'      => 'required|string',
+            'size'       => 'required|string',
             'quantity'   => 'required|integer|min:1',
+            'mode'       => 'nullable|string',
         ]);
 
-        // Busca o produto no banco
         $produto = DB::table('produtos')->where('id', $data['product_id'])->first();
 
         if (!$produto) {
-            return back()->with('cart_error', 'Produto não encontrado.');
+            return back()->with([
+                'cart_error' => 'Produto não encontrado.',
+                'cart_open'  => true,
+            ]);
         }
 
-        $quantity   = (int) $data['quantity'];
-        $unitPrice  = (float) $produto->valor;
+        $detalhes = json_decode($produto->detalhes ?? '[]', true);
+        $detalhes = is_array($detalhes) ? $detalhes : [];
+
+        $variacaoSelecionada = null;
+
+        foreach ($detalhes as $detalhe) {
+            if (!is_array($detalhe)) {
+                continue;
+            }
+
+            $cor = mb_strtolower(trim($detalhe['cor'] ?? ''));
+            $tamanho = trim($detalhe['tamanho'] ?? '');
+
+            if ($cor === mb_strtolower(trim($data['color'])) && $tamanho === trim($data['size'])) {
+                $variacaoSelecionada = $detalhe;
+                break;
+            }
+        }
+
+        if (!$variacaoSelecionada) {
+            return back()->with([
+                'cart_error' => 'Variação do produto não encontrada.',
+                'cart_open'  => true,
+            ]);
+        }
+
+        $estoqueDisponivel = (int) ($variacaoSelecionada['qtd'] ?? 0);
+        $quantity = (int) $data['quantity'];
+
+        if ($estoqueDisponivel <= 0) {
+            return back()->with([
+                'cart_error' => 'Essa variação está sem estoque.',
+                'cart_open'  => true,
+            ]);
+        }
+
+        if ($quantity > $estoqueDisponivel) {
+            return back()->with([
+                'cart_error' => 'Quantidade maior que o estoque disponível.',
+                'cart_open'  => true,
+            ]);
+        }
+
+        $unitPrice = (float) ($variacaoSelecionada['valor'] ?? 0);
         $totalValue = $unitPrice * $quantity;
 
-        // Recupera carrinho atual da sessão (ou cria vazio)
+        $imagemPrincipal = null;
+        if (!empty($variacaoSelecionada['imagens']) && is_array($variacaoSelecionada['imagens'])) {
+            $imagemPrincipal = $variacaoSelecionada['imagens']['imagem1']
+                ?? $variacaoSelecionada['imagens']['imagem2']
+                ?? $variacaoSelecionada['imagens']['imagem3']
+                ?? $variacaoSelecionada['imagens']['imagem4']
+                ?? null;
+        }
+
         $cart = session()->get('cart', []);
 
-        // Chave única por produto + cor (se quiser incluir tamanho, só concatenar também)
-        $key = $produto->id . '|' . mb_strtolower($data['color']);
+        $key = $produto->id . '|' . mb_strtolower(trim($data['color'])) . '|' . trim($data['size']);
 
         if (isset($cart[$key])) {
-            // Já existe esse produto + cor no carrinho: soma quantidade e recalcula total
-            $cart[$key]['quantity']    += $quantity;
-            $cart[$key]['total_value']  = $cart[$key]['quantity'] * $cart[$key]['unit_price'];
+            $novaQuantidade = $cart[$key]['quantity'] + $quantity;
+
+            if ($novaQuantidade > $estoqueDisponivel) {
+                return back()->with([
+                    'cart_error' => 'Você atingiu o limite de estoque dessa variação.',
+                    'cart_open'  => true,
+                ]);
+            }
+
+            $cart[$key]['quantity'] = $novaQuantidade;
+            $cart[$key]['total_value'] = $cart[$key]['quantity'] * $cart[$key]['unit_price'];
         } else {
-            // Novo item no carrinho
             $cart[$key] = [
-                'product_id'  => $produto->id,
-                'title'       => $produto->titulo,
-                'size'        => $produto->tamanho,
-                'color'       => $data['color'],
-                'quantity'    => $quantity,
-                'unit_price'  => $unitPrice,
-                'total_value' => $totalValue,
-                'image'       => $produto->imagem, // nome do arquivo da imagem
+                'product_id'   => $produto->id,
+                'category'     => $produto->categorias,
+                'title'        => $produto->titulo,
+                'description'  => $produto->descricao,
+                'size'         => trim($data['size']),
+                'color'        => trim($data['color']),
+                'quantity'     => $quantity,
+                'stock'        => $estoqueDisponivel,
+                'unit_price'   => $unitPrice,
+                'total_value'  => $totalValue,
+                'image'        => $imagemPrincipal,
+                'details_item' => $variacaoSelecionada,
             ];
         }
 
-        // Salva carrinho de volta na sessão
         session()->put('cart', $cart);
 
-        // Volta pra mesma página, com mensagem e mandando abrir o popup
+        if (($data['mode'] ?? '') === 'buy_now') {
+            return view('product.resumo', [
+                'items' => [$cart[$key]],
+            ]);
+        }
+
         return back()->with([
             'cart_success' => 'Produto adicionado ao carrinho!',
             'cart_open'    => true,
         ]);
     }
 
-    /**
-     * Remove um item específico do carrinho (pela chave da sessão).
-     */
     public function removeItem(Request $request)
     {
         $key = $request->input('key');
@@ -78,6 +142,36 @@ class CartController extends Controller
         return back()->with('cart_open', true);
     }
 
-   
-    
+    public function updateItem(Request $request)
+    {
+        $data = $request->validate([
+            'key'      => 'required|string',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $cart = session()->get('cart', []);
+
+        if (!isset($cart[$data['key']])) {
+            return back()->with('cart_open', true);
+        }
+
+        $item = $cart[$data['key']];
+        $stock = (int) ($item['stock'] ?? 0);
+        $newQuantity = (int) $data['quantity'];
+
+        if ($stock > 0 && $newQuantity > $stock) {
+            $newQuantity = $stock;
+        }
+
+        if ($newQuantity < 1) {
+            $newQuantity = 1;
+        }
+
+        $cart[$data['key']]['quantity'] = $newQuantity;
+        $cart[$data['key']]['total_value'] = $newQuantity * (float) $cart[$data['key']]['unit_price'];
+
+        session()->put('cart', $cart);
+
+        return back()->with('cart_open', true);
+    }
 }
