@@ -5,19 +5,27 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\MercadoPagoConfig;
+use MercadoPago\Client\Payment\PaymentClient;
+use MercadoPago\Client\Common\RequestOptions;
 
 class PagamentoController extends Controller
 {
-    /**
-     * Recebe o POST do resumo, grava na tabela compra
-     * e cria a preferência de pagamento no Mercado Pago.
-     */
-    public function pagar(Request $request)
+    public function __construct()
     {
-        // Validação básica do que vem da view resumo
+        MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_ACCESS_TOKEN'));
+    }
+
+    public function checkout(Request $request)
+    {
+        $idUsuario = session('id_usuario') ?? session('user_id');
+
+        if (!$idUsuario) {
+            return back()->with('cart_error', 'Faça login para continuar.');
+        }
+
         $request->validate([
-            'id_usuario'                 => 'required|integer',
+            'id_usuario'                 => 'nullable|integer',
             'total'                      => 'required|numeric|min:0.01',
             'produtos'                   => 'required|array|min:1',
             'produtos.*.id_produto'      => 'required|integer',
@@ -27,118 +35,243 @@ class PagamentoController extends Controller
             'produtos.*.valor'           => 'required|numeric|min:0.01',
         ]);
 
-        $idUsuario = $request->input('id_usuario');
-        $produtos  = $request->input('produtos');
+        $payload = [
+            'id_usuario' => $idUsuario,
+            'total'      => (float) $request->input('total'),
+            'produtos'   => $request->input('produtos'),
+        ];
 
-        // Código que identifica TODOS os itens da mesma compra
-        $buyCode = strtoupper(Str::random(10));
-        $now     = now();
+        session()->put('checkout_payload', $payload);
 
-        // 1) Grava tudo na tabela compra
-        DB::beginTransaction();
+        return view('pagamento.pagamento', [
+            'checkout'  => $payload,
+            'userId'    => $idUsuario,
+            'userName'  => session('user_name'),
+            'userEmail' => session('user_email'),
+        ]);
+    }
 
-        foreach ($produtos as $p) {
-            DB::table('compras')->insert([
-                'id_usuario'         => $idUsuario,
-                'id_produto'         => $p['id_produto'],
-                'paymentid'          => null,
-                'tamanho'            => $p['tamanho'],
-                'cor'                => $p['cor'],
-                'quantidade'         => $p['quantidade'],
-                'valor'              => $p['valor'],          // valor do registro (já * quantidade)
-                'buyCode'            => $buyCode,
-                'pago'               => 0,                    // começa como NÃO pago
-                'tipo_pagamento'     => null,
-                'status_pagamento'   => 'pending',
-                'detalhes_pagamento' => null,
-                'created_at'         => $now,
-                'updated_at'         => $now,
-            ]);
+    public function processarPix(Request $request)
+    {
+        $payload = session('checkout_payload');
+
+        if (!$payload || empty($payload['produtos'])) {
+            return redirect()->route('home.index')->with('cart_error', 'Sessão de checkout expirada.');
         }
 
-        DB::commit();
-
-        // 2) Cria preferência no Mercado Pago
-        $client = new PreferenceClient();
-
-        $mpItems = [];
-        foreach ($produtos as $p) {
-            $mpItems[] = [
-                'title'      => 'Crofline',                     // título genérico
-                'quantity'   => (int) $p['quantidade'],
-                'unit_price' => (float) $p['valor'],            // valor do registro
-            ];
-        }
-
-        $preference = $client->create([
-            'items' => $mpItems,
-
-            // Vamos usar o buyCode pra rastrear todos os itens dessa compra
-            'external_reference' => $buyCode,
-
-            'back_urls' => [
-                'success' => route('pagamento.minhasCompras'),
-                'failure' => route('pagamento.minhasCompras'),
-                'pending' => route('pagamento.minhasCompras'),
-            ],
-            'auto_return'      => 'approved',
-
-            // URL que o MP chama pra avisar status (notificação)
-            'notification_url' => route('pagamento.checkoutResp'),
+        $request->validate([
+            'payer_email'   => 'required|email',
+            'payer_name'    => 'required|string|max:120',
+            'doc_type'      => 'nullable|string|max:10',
+            'doc_number'    => 'nullable|string|max:30',
         ]);
 
-        // Redireciona o cliente para o checkout do Mercado Pago
-        return redirect($preference->init_point);
-    }
+        $buyCode = strtoupper(Str::random(10));
 
-    /**
-     * Recebe o retorno/notificação do Mercado Pago
-     * e atualiza a tabela compra com base no buyCode (external_reference).
-     */
-    public function checkoutResp(Request $request)
-    {
-        $buyCode = $request->input('external_reference');
-
-        if (!$buyCode) {
-            return response()->json(['error' => 'external_reference não informado'], 400);
-        }
-
-        // Campos que o MP costuma mandar
-        $status        = $request->input('status');             // approved, pending, rejected...
-        $statusDetail  = $request->input('status_detail');      // detalhes
-        $paymentMethod = $request->input('payment_method_id');  // cartão, pix, etc
-        $paymentId     = $request->input('payment_id') ?? $request->input('id');
-
-        $pago = $status === 'approved' ? 1 : 0;
-
-        // Atualiza TODOS os registros dessa compra (buyCode)
-        DB::table('compras')
-            ->where('buyCode', $buyCode)
-            ->whereNull('paymentid') // só se ainda não tiver ID de pagamento
-            ->update([
-                'paymentid'          => $paymentId,
-                'pago'               => $pago,
-                'tipo_pagamento'     => $paymentMethod,
-                'status_pagamento'   => $status,
-                'detalhes_pagamento' => $statusDetail,
-                'updated_at'         => now(),
+        try {
+            $client = new PaymentClient();
+            $requestOptions = new RequestOptions();
+            $requestOptions->setCustomHeaders([
+                'X-Idempotency-Key: ' . (string) Str::uuid(),
             ]);
 
-        // Se é notificação (POST/JSON), responde JSON
-        if ($request->expectsJson() || $request->isMethod('post')) {
-            return response()->json(['success' => true]);
-        }
+            $payment = $client->create([
+                'transaction_amount' => (float) $payload['total'],
+                'description'        => 'Crofline #' . $buyCode,
+                'payment_method_id'  => 'pix',
+                'external_reference' => $buyCode,
+                'notification_url'   => route('pagamento.checkoutResp'),
+                'payer' => [
+                    'email'         => $request->payer_email,
+                    'first_name'    => $request->payer_name,
+                    'entity_type'   => 'individual',
+                    'identification' => [
+                        'type'   => $request->doc_type ?: 'CPF',
+                        'number' => $request->doc_number ?: '00000000000',
+                    ],
+                ],
+            ], $requestOptions);
 
-        // Se veio de redirect (back_urls), manda pra minhas compras
-        return redirect()->route('pagamento.minhasCompras');
+            $paymentData = json_decode(json_encode($payment), true);
+
+            $this->gravarCompra(
+                $payload,
+                $buyCode,
+                $paymentData['id'] ?? null,
+                'pix',
+                $paymentData['status'] ?? 'pending',
+                $paymentData['status_detail'] ?? null,
+                (int) (($paymentData['status'] ?? '') === 'approved'),
+                $paymentData['point_of_interaction']['transaction_data']['qr_code'] ?? null,
+                $paymentData['point_of_interaction']['transaction_data']['qr_code_base64'] ?? null,
+                null
+            );
+
+            session()->forget('checkout_payload');
+
+            return redirect()
+                ->route('pagamento.minhasCompras')
+                ->with('success', 'Pix gerado com sucesso.');
+        } catch (\Throwable $e) {
+            $this->gravarCompra(
+                $payload,
+                $buyCode,
+                null,
+                'pix',
+                'pending',
+                $e->getMessage(),
+                0,
+                null,
+                null,
+                null
+            );
+
+            session()->forget('checkout_payload');
+
+            return redirect()
+                ->route('pagamento.minhasCompras')
+                ->with('error', 'Não foi possível gerar o Pix agora. A compra ficou como pendente.');
+        }
     }
 
-    /**
-     * Lista das compras do usuário (Pendentes, Pagas e Finalizadas).
-     */
+    public function processarCartao(Request $request)
+    {
+        $payload = session('checkout_payload');
+
+        if (!$payload || empty($payload['produtos'])) {
+            return redirect()->route('home.index')->with('cart_error', 'Sessão de checkout expirada.');
+        }
+
+        $request->validate([
+            'payer_email'             => 'required|email',
+            'payment_type_choice'     => 'required|string|in:credito,debito',
+            'token'                   => 'required|string',
+            'payment_method_id'       => 'required|string',
+            'issuer_id'               => 'nullable',
+            'installments'            => 'nullable|integer|min:1',
+            'identification_type'     => 'required|string',
+            'identification_number'   => 'required|string',
+        ]);
+
+        $buyCode = strtoupper(Str::random(10));
+
+        try {
+            $client = new PaymentClient();
+            $requestOptions = new RequestOptions();
+            $requestOptions->setCustomHeaders([
+                'X-Idempotency-Key: ' . (string) Str::uuid(),
+            ]);
+
+            $payment = $client->create([
+                'transaction_amount' => (float) $payload['total'],
+                'token'              => $request->token,
+                'description'        => 'Crofline #' . $buyCode,
+                'installments'       => (int) ($request->installments ?: 1),
+                'payment_method_id'  => $request->payment_method_id,
+                'issuer_id'          => $request->issuer_id ? (int) $request->issuer_id : null,
+                'external_reference' => $buyCode,
+                'notification_url'   => route('pagamento.checkoutResp'),
+                'payer' => [
+                    'email' => $request->payer_email,
+                    'identification' => [
+                        'type'   => $request->identification_type,
+                        'number' => $request->identification_number,
+                    ],
+                ],
+            ], $requestOptions);
+
+            $paymentData = json_decode(json_encode($payment), true);
+
+            $status = $paymentData['status'] ?? 'pending';
+            $statusDetail = $paymentData['status_detail'] ?? null;
+            $pago = $status === 'approved' ? 1 : 0;
+
+            $this->gravarCompra(
+                $payload,
+                $buyCode,
+                $paymentData['id'] ?? null,
+                $request->payment_type_choice,
+                $status,
+                $statusDetail,
+                $pago,
+                null,
+                null,
+                $pago ? 'pago' : null
+            );
+
+            session()->forget('checkout_payload');
+
+            return redirect()
+                ->route('pagamento.minhasCompras')
+                ->with(
+                    $pago ? 'success' : 'error',
+                    $pago
+                        ? 'Pagamento processado com sucesso.'
+                        : 'O pagamento não foi aprovado agora. A compra ficou pendente.'
+                );
+        } catch (\Throwable $e) {
+            $this->gravarCompra(
+                $payload,
+                $buyCode,
+                null,
+                $request->payment_type_choice,
+                'pending',
+                $e->getMessage(),
+                0,
+                null,
+                null,
+                null
+            );
+
+            session()->forget('checkout_payload');
+
+            return redirect()
+                ->route('pagamento.minhasCompras')
+                ->with('error', 'Falha no pagamento por cartão. A compra ficou pendente.');
+        }
+    }
+
+    public function checkoutResp(Request $request)
+    {
+        $paymentId = $request->input('data.id') ?? $request->input('payment_id') ?? $request->input('id');
+
+        if (!$paymentId) {
+            return response()->json(['ok' => false], 400);
+        }
+
+        try {
+            $client = new PaymentClient();
+            $payment = $client->get((int) $paymentId);
+            $paymentData = json_decode(json_encode($payment), true);
+
+            $buyCode = $paymentData['external_reference'] ?? null;
+            if (!$buyCode) {
+                return response()->json(['ok' => false], 400);
+            }
+
+            $status = $paymentData['status'] ?? 'pending';
+            $statusDetail = $paymentData['status_detail'] ?? null;
+            $pago = $status === 'approved' ? 1 : 0;
+
+            DB::table('compras')
+                ->where('buyCode', $buyCode)
+                ->update([
+                    'paymentid'          => $paymentData['id'] ?? null,
+                    'pago'               => $pago,
+                    'status_pagamento'   => $status,
+                    'detalhes_pagamento' => $statusDetail,
+                    'updated_at'         => now(),
+                    'status_entrega'     => $pago ? DB::raw("COALESCE(status_entrega, 'pago')") : DB::raw('status_entrega'),
+                ]);
+
+            return response()->json(['ok' => true]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
     public function minhasCompras(Request $request)
     {
-        // Ajusta aqui qual chave de sessão você está usando pro usuário
         $idUsuario = session('id_usuario') ?? session('user_id');
 
         if (!$idUsuario) {
@@ -150,17 +283,41 @@ class PagamentoController extends Controller
             ->select(
                 'compras.*',
                 'produtos.titulo as produto_titulo',
-                'produtos.imagem as produto_imagem'
+                'produtos.descricao as produto_descricao',
+                'produtos.detalhes as produto_detalhes'
             )
             ->where('compras.id_usuario', $idUsuario)
             ->orderByDesc('compras.created_at')
             ->get();
 
-        // Agrupa por buyCode (uma compra = vários itens)
+        $compras = $compras->map(function ($item) {
+            $item->produto_imagem = null;
+
+            $detalhes = json_decode($item->produto_detalhes ?? '[]', true);
+            $detalhes = is_array($detalhes) ? $detalhes : [];
+
+            foreach ($detalhes as $detalhe) {
+                $cor = trim($detalhe['cor'] ?? '');
+                $tamanho = trim($detalhe['tamanho'] ?? '');
+
+                if (mb_strtolower($cor) === mb_strtolower(trim($item->cor)) && $tamanho === trim($item->tamanho)) {
+                    $item->produto_imagem = $detalhe['imagens']['imagem1']
+                        ?? $detalhe['imagens']['imagem2']
+                        ?? $detalhe['imagens']['imagem3']
+                        ?? $detalhe['imagens']['imagem4']
+                        ?? null;
+                    break;
+                }
+            }
+
+            return $item;
+        });
+
         $grouped = $compras->groupBy('buyCode');
 
-        $pendentes   = [];
-        $pagas       = [];
+        $pendentes = [];
+        $pagas = [];
+        $enviadas = [];
         $finalizadas = [];
 
         foreach ($grouped as $buyCode => $itens) {
@@ -170,25 +327,69 @@ class PagamentoController extends Controller
                 'buyCode'          => $buyCode,
                 'created_at'       => $first->created_at,
                 'status_pagamento' => $first->status_pagamento,
+                'status_entrega'   => $first->status_entrega,
                 'pago'             => $first->pago,
+                'tipo_pagamento'   => $first->tipo_pagamento,
+                'qr_code'          => $first->qr_code,
+                'qr_code_base64'   => $first->qr_code_base64,
                 'itens'            => $itens,
             ];
 
-            if (!$compra['pago']) {
-                $pendentes[] = $compra;
-            } elseif ($compra['status_pagamento'] === 'finalizada') {
-                // se algum dia você marcar como finalizada
+            if (in_array($first->status_entrega, ['finalizado', 'finalizada'])) {
                 $finalizadas[] = $compra;
-            } else {
-                // aprovadas / pagas
+            } elseif (in_array($first->status_entrega, ['enviado', 'a_caminho'])) {
+                $enviadas[] = $compra;
+            } elseif ((int) $first->pago === 1) {
                 $pagas[] = $compra;
+            } else {
+                $pendentes[] = $compra;
             }
         }
 
         return view('pagamento.minhasCompras', [
             'pendentes'   => $pendentes,
             'pagas'       => $pagas,
+            'enviadas'    => $enviadas,
             'finalizadas' => $finalizadas,
         ]);
+    }
+
+    private function gravarCompra(
+        array $payload,
+        string $buyCode,
+        $paymentId,
+        ?string $tipoPagamento,
+        ?string $statusPagamento,
+        ?string $detalhesPagamento,
+        int $pago,
+        ?string $qrCode,
+        ?string $qrCodeBase64,
+        ?string $statusEntrega
+    ): void {
+        DB::beginTransaction();
+
+        foreach ($payload['produtos'] as $p) {
+            DB::table('compras')->insert([
+                'id_usuario'         => $payload['id_usuario'],
+                'id_produto'         => $p['id_produto'],
+                'paymentid'          => $paymentId,
+                'cor'                => $p['cor'],
+                'tamanho'            => $p['tamanho'],
+                'valor'              => $p['valor'],
+                'qtd'                => $p['quantidade'],
+                'buyCode'            => $buyCode,
+                'pago'               => $pago,
+                'tipo_pagamento'     => $tipoPagamento,
+                'status_pagamento'   => $statusPagamento,
+                'status_entrega'     => $statusEntrega,
+                'detalhes_pagamento' => $detalhesPagamento,
+                'qr_code'            => $qrCode,
+                'qr_code_base64'     => $qrCodeBase64,
+                'created_at'         => now(),
+                'updated_at'         => now(),
+            ]);
+        }
+
+        DB::commit();
     }
 }

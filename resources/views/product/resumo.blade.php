@@ -303,58 +303,93 @@
         <div class="resumo-card-resumo">
             <h3><i class="bi bi-receipt-cutoff"></i> Resumo</h3>
 
-            <form action="{{ route('pagamento.pagar') }}" method="POST">
-                @csrf
+            <form id="resumo-checkout-form" action="{{ route('pagamento.checkout') }}" method="POST">
+        @csrf
 
-                <input type="hidden" name="id_usuario" value="{{ session('id_usuario') ?? session('user_id') }}">
-                <input type="hidden" name="total" value="{{ $subtotal }}">
+        <input type="hidden" name="id_usuario"
+            value="{{ session('id_usuario') ?? session('user_id') }}">
 
-                @foreach($items as $index => $item)
-                    <input type="hidden" name="produtos[{{ $index }}][id_produto]" value="{{ $item['product_id'] ?? '' }}">
-                    <input type="hidden" name="produtos[{{ $index }}][tamanho]" value="{{ $item['size'] ?? '' }}">
-                    <input type="hidden" name="produtos[{{ $index }}][cor]" value="{{ $item['color'] ?? '' }}">
-                    <input type="hidden" name="produtos[{{ $index }}][quantidade]" value="{{ $item['quantity'] }}">
-                    <input type="hidden" name="produtos[{{ $index }}][valor]" value="{{ $item['total_value'] }}">
-                @endforeach
+        <input type="hidden" name="total" value="{{ $subtotal }}">
 
-                <div class="resumo-linhas">
-                    <div class="resumo-linha">
-                        <span>Subtotal</span>
-                        <span>R$ {{ number_format($subtotal, 2, ',', '.') }}</span>
-                    </div>
+        @foreach($items as $index => $item)
+            <input type="hidden" name="produtos[{{ $index }}][id_produto]"
+                value="{{ $item['product_id'] ?? $item['id'] ?? '' }}">
 
-                    <div class="resumo-linha">
-                        <span>Frete</span>
-                        <span>Calcular depois</span>
-                    </div>
+            <input type="hidden" name="produtos[{{ $index }}][tamanho]"
+                value="{{ $item['size'] ?? '' }}">
 
-                    <div class="resumo-linha">
-                        <span>Pagamento</span>
-                        <span>Mercado Pago</span>
-                    </div>
-                </div>
+            <input type="hidden" name="produtos[{{ $index }}][cor]"
+                value="{{ $item['color'] ?? '' }}">
 
-                <div class="resumo-total">
-                    <span>Total</span>
-                    <span>R$ {{ number_format($subtotal, 2, ',', '.') }}</span>
-                </div>
+            <input type="hidden" name="produtos[{{ $index }}][quantidade]"
+                value="{{ $item['quantity'] }}">
 
-                <div class="resumo-info-extra">
-                    Ao finalizar, você será redirecionada para a etapa de pagamento. Revise cor, tamanho e quantidade antes de continuar.
-                </div>
+            <input type="hidden" name="produtos[{{ $index }}][valor]"
+                value="{{ $item['total_value'] }}">
+        @endforeach
 
-                <button type="submit" class="btn-crofline btn-crofline-primary">
-                    <i class="bi bi-credit-card-2-front-fill"></i>
-                    Finalizar compra
-                </button>
+        <div class="resumo-linhas">
+            <div class="resumo-linha">
+                <span>Subtotal</span>
+                <span>R$ {{ number_format($subtotal, 2, ',', '.') }}</span>
+            </div>
 
-                <button type="button" class="btn-crofline btn-crofline-secondary" onclick="window.history.back();">
-                    <i class="bi bi-arrow-left-circle-fill"></i>
-                    Continuar comprando
-                </button>
-            </form>
+            <div class="resumo-linha">
+                <span>Frete</span>
+                <span>Calcular depois</span>
+            </div>
+
+            <div class="resumo-linha">
+                <span>Pagamento</span>
+                <span>Mercado Pago</span>
+            </div>
         </div>
+
+        <div class="resumo-total">
+            <span>Total</span>
+            <span>R$ {{ number_format($subtotal, 2, ',', '.') }}</span>
+        </div>
+
+        <div class="resumo-info-extra">
+            Ao finalizar, você escolherá Pix, crédito ou débito. Se não estiver logada, o popup de login será exibido.
+        </div>
+
+        <button type="button" class="btn-crofline btn-crofline-primary" id="btn-ir-pagamento">
+            <i class="bi bi-credit-card-2-front-fill"></i>
+            Finalizar compra
+        </button>
+
+        <button type="button"
+                class="btn-crofline btn-crofline-secondary"
+                onclick="window.history.back();">
+            <i class="bi bi-arrow-left-circle-fill"></i>
+            Continuar comprando
+        </button>
+            </form>
+            </div>
 
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    const btnIrPagamento = document.getElementById('btn-ir-pagamento');
+    const formCheckout = document.getElementById('resumo-checkout-form');
+    const userId = @json(session('id_usuario') ?? session('user_id'));
+
+    if (!btnIrPagamento || !formCheckout) return;
+
+    btnIrPagamento.addEventListener('click', function () {
+        if (!userId) {
+            if (typeof abrirPopupCadastro === 'function') {
+                abrirPopupCadastro();
+            } else {
+                alert('Faça login para continuar.');
+            }
+            return;
+        }
+
+        formCheckout.submit();
+    });
+});
+</script>
 @endsection

@@ -26,8 +26,9 @@ Route::post('/cart/remove', [CartController::class, 'removeItem'])->name('cart.r
 Route::post('/cart/update', [CartController::class, 'updateItem'])->name('cart.update');
 
 //Pagamento Controller
-Route::post('/pagamento/pagar', [PagamentoController::class, 'pagar'])
-    ->name('pagamento.pagar');
+Route::post('/pagamento/checkout', [PagamentoController::class, 'checkout'])->name('pagamento.checkout');
+Route::post('/pagamento/pix', [PagamentoController::class, 'processarPix'])->name('pagamento.pix');
+Route::post('/pagamento/cartao', [PagamentoController::class, 'processarCartao'])->name('pagamento.cartao');
 
 Route::match(['get', 'post'], '/pagamento/retorno', [PagamentoController::class, 'checkoutResp'])
     ->name('pagamento.checkoutResp');
