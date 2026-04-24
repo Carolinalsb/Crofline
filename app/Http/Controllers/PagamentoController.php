@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use MercadoPago\MercadoPagoConfig;
+use MercadoPago\SDK;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Common\RequestOptions;
 
@@ -13,7 +13,7 @@ class PagamentoController extends Controller
 {
     public function __construct()
     {
-        MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_ACCESS_TOKEN'));
+        SDK::setAccessToken(env('MERCADOPAGO_ACCESS_TOKEN'));
     }
 
     public function checkout(Request $request)
