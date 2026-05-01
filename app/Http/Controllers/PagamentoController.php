@@ -13,7 +13,7 @@ class PagamentoController extends Controller
 {
     public function __construct()
     {
-        MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_ACCESS_TOKEN'));
+        MercadoPagoConfig::setAccessToken(env('MERCADO_PAGO_ACCESS_TOKEN'));
     }
 
     public function checkout(Request $request)
