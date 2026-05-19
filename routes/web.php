@@ -19,6 +19,8 @@ Route::post('/product/resumo', [ProductController::class, 'resumo'])->name('prod
 Route::post('/account/register', [AccountController::class, 'register'])->name('account.register');
 Route::post('/login', [AccountController::class, 'login'])->name('account.login');
 Route::get('/logout', [AccountController::class, 'logout'])->name('account.logout');
+Route::get('/minha-conta', [AccountController::class, 'gerenciarConta'])->name('account.gerenciarConta');
+Route::post('/minha-conta/excluir', [AccountController::class, 'excluirConta'])->name('account.excluirConta');
 
 //Cart Controller
 Route::post('/cart/add', [CartController::class, 'addToCart'])->name('cart.add');

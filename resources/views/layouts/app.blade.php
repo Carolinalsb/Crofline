@@ -160,6 +160,16 @@
             color: #ffb3ff;
         }
 
+        .nav-link-icon {
+            text-decoration: none;
+        }
+
+        .nav-link-icon:focus,
+        .nav-link-icon:active,
+        .nav-link-icon:hover {
+            text-decoration: none;
+        }
+
         /* ===== NAV CATEGORIAS DESKTOP DENTRO DA BARRA ===== */
 
         .menu-categorias-desktop {
@@ -504,6 +514,62 @@
             outline: none;
         }
 
+        .campo-senha-flutuante {
+            position: relative;
+            width: 100%;
+        }
+
+        .cadastro-password-hint {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 100%;
+            min-width: 240px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f2ddff;
+            border: 1px solid rgba(123, 44, 191, 0.22);
+            font-size: 0.80rem;
+            color: #543062;
+            line-height: 1.45;
+            box-shadow: 0 10px 22px rgba(36, 3, 77, 0.14);
+            z-index: 50;
+            display: none;
+        }
+
+        .cadastro-password-hint.ativo {
+            display: block;
+        }
+
+        .cadastro-password-hint strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #24034d;
+        }
+
+        .cadastro-password-status {
+            display: block;
+            margin-top: 6px;
+            font-weight: 700;
+            color: #a11b3f;
+        }
+
+        .cadastro-password-status.forte {
+            color: #15803d;
+        }
+
+        .cadastro-password-status.media {
+            color: #a16207;
+        }
+
+        @media (max-width: 768px) {
+            .cadastro-password-hint {
+                min-width: 100%;
+                width: 100%;
+                font-size: 0.78rem;
+            }
+        }
+
         input:focus {
             border: 1.45px solid #a855f7;
             box-shadow: 0 0 5px rgba(168, 85, 247, 0.5);
@@ -766,8 +832,8 @@
         }
 
         .cart-primary-btn {
-             background: #751597;
-             color: #fff;
+            background: #751597;
+            color: #fff;
         }
 
         .cart-primary-btn:hover {
@@ -975,9 +1041,7 @@
             {{-- ESQUERDA: logo (desktop) + sanduíche (mobile) --}}
             <div class="nav-left">
                 <a href="{{ url('/') }}" class="nav-logo-link d-none d-lg-inline-block">
-                    <img src="{{ asset('img/logoCrof.png') }}"
-                         alt="Crofline"
-                         class="brand-logo-desktop">
+                    <img src="{{ asset('img/logoCrof.png') }}" alt="Crofline" class="brand-logo-desktop">
                 </a>
 
                 <button type="button" class="btn-menu-mobile d-lg-none" id="btn-menu-mobile" aria-label="Abrir menu">
@@ -1002,23 +1066,23 @@
             </div>
 
             {{-- DIREITA: ícones --}}
-            <div class="nav-right">
-                <div class="nav-icons">
-                    <button type="button" class="nav-icon-btn" aria-label="Buscar">
-                        <i class="bi bi-search-heart-fill"></i>
-                    </button>
-                    <button type="button" class="nav-icon-btn" aria-label="Login">
-                        <i class="bi bi-person-fill" id="btn-login"></i>
-                    </button>
-                    <button
-                        type="button"
-                        class="nav-icon-btn"
-                        aria-label="Carrinho"
-                        id="btn-cart"
-                    >
-                        <i class="bi bi-bag-heart-fill"></i>
-                    </button>
-                </div>
+            <div class="nav-icons">
+                <button type="button" class="nav-icon-btn" aria-label="Buscar">
+                    <i class="bi bi-search-heart-fill"></i>
+                </button>
+
+                <button type="button" class="nav-icon-btn" aria-label="Login">
+                    <i class="bi bi-person-fill" id="btn-login"></i>
+                </button>
+
+                <a href="{{ route('pagamento.minhasCompras') }}" class="nav-icon-btn nav-link-icon"
+                    aria-label="Minhas compras">
+                    <i class="bi bi-receipt-cutoff"></i>
+                </a>
+
+                <button type="button" class="nav-icon-btn" aria-label="Carrinho" id="btn-cart">
+                    <i class="bi bi-bag-heart-fill"></i>
+                </button>
             </div>
         </nav>
     </header>
@@ -1050,7 +1114,7 @@
     </aside>
 
     {{-- CONTEÚDO --}}
-    <div id="conteudo" class="conteudo-principal @if(session('success')) blur @endif">
+    <div id="conteudo" class="conteudo-principal @if (session('success')) blur @endif">
         @yield('content')
     </div>
 
@@ -1060,111 +1124,109 @@
     </form>
 
     {{-- CARRINHO GLOBAL (DRAWER) --}}
-<div id="cart-overlay" class="cart-overlay">
-    <div class="cart-drawer">
-        <div class="cart-header">
-            <h3>Carrinho</h3>
-            <button type="button" class="cart-close-btn" id="cart-close-btn">&times;</button>
-        </div>
-
-        <div class="cart-items" id="cart-items">
-            @if(count($cartItems) === 0)
-                <p style="font-size:13px; opacity:0.8;">Seu carrinho está vazio.</p>
-            @else
-                @foreach($cartItems as $key => $item)
-                    <div class="cart-item" style="grid-template-columns: 24px 64px 1fr; gap: 10px;">
-                        <div class="d-flex justify-content-center">
-                            <input type="checkbox"
-                                   class="form-check-input"
-                                   name="selected_items[]"
-                                   value="{{ $key }}"
-                                   form="cart-resumo-form">
-                        </div>
-
-                        <img src="{{ !empty($item['image']) ? asset('img/' . $item['image']) : asset('img/sem-imagem.png') }}"
-                             alt="{{ $item['title'] }}">
-
-                        <div>
-                            <div class="cart-item-title">{{ $item['title'] }}</div>
-
-                            <div class="cart-item-meta">
-                                Tamanho: {{ $item['size'] }} &nbsp;|&nbsp; Cor: {{ $item['color'] }}
-                            </div>
-
-                            <div class="cart-item-meta">
-                                Unitário: R$ {{ number_format($item['unit_price'], 2, ',', '.') }}
-                            </div>
-
-                            <div class="d-flex align-items-center gap-2 mt-2 mb-2">
-                                <form method="POST" action="{{ route('cart.update') }}" style="display:inline;">
-                                    @csrf
-                                    <input type="hidden" name="key" value="{{ $key }}">
-                                    <input type="hidden" name="quantity" value="{{ max(1, $item['quantity'] - 1) }}">
-                                    <button type="submit"
-                                            style="width:26px;height:26px;border:none;border-radius:999px;background:#751597;color:#fff;">
-                                        -
-                                    </button>
-                                </form>
-
-                                <span style="font-size:12px; min-width:24px; text-align:center;">
-                                    {{ $item['quantity'] }}
-                                </span>
-
-                                <form method="POST" action="{{ route('cart.update') }}" style="display:inline;">
-                                    @csrf
-                                    <input type="hidden" name="key" value="{{ $key }}">
-                                    <input type="hidden" name="quantity" value="{{ min(($item['stock'] ?? $item['quantity']), $item['quantity'] + 1) }}">
-                                    <button type="submit"
-                                            style="width:26px;height:26px;border:none;border-radius:999px;background:#751597;color:#fff;">
-                                        +
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div class="d-flex justify-content-between align-items-center mt-1">
-                                <div class="cart-item-price">
-                                    R$ {{ number_format($item['total_value'], 2, ',', '.') }}
-                                </div>
-
-                                <button type="submit"
-                                        form="cart-remove-{{ $key }}"
-                                        class="btn btn-link p-0"
-                                        style="font-size:11px;color:#ff9b9b;text-decoration:underline;">
-                                    remover
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <form id="cart-remove-{{ $key }}" method="POST" action="{{ route('cart.remove') }}" style="display:none;">
-                        @csrf
-                        <input type="hidden" name="key" value="{{ $key }}">
-                    </form>
-                @endforeach
-            @endif
-        </div>
-
-        <div class="cart-footer">
-            <div class="cart-total-row">
-                <span>Total</span>
-                <span id="cart-total">
-                    R$ {{ number_format($cartTotal, 2, ',', '.') }}
-                </span>
+    <div id="cart-overlay" class="cart-overlay">
+        <div class="cart-drawer">
+            <div class="cart-header">
+                <h3>Carrinho</h3>
+                <button type="button" class="cart-close-btn" id="cart-close-btn">&times;</button>
             </div>
 
-            <button type="submit"
-                    class="cart-primary-btn"
-                    id="cart-checkout"
-                    form="cart-resumo-form">
-                Finalizar compra
-            </button>
+            <div class="cart-items" id="cart-items">
+                @if (count($cartItems) === 0)
+                    <p style="font-size:13px; opacity:0.8;">Seu carrinho está vazio.</p>
+                @else
+                    @foreach ($cartItems as $key => $item)
+                        <div class="cart-item" style="grid-template-columns: 24px 64px 1fr; gap: 10px;">
+                            <div class="d-flex justify-content-center">
+                                <input type="checkbox" class="form-check-input" name="selected_items[]"
+                                    value="{{ $key }}" form="cart-resumo-form">
+                            </div>
 
-            <button type="button" class="cart-secondary-btn" id="cart-continue">
-                Continuar comprando
-            </button>
+                            <img src="{{ !empty($item['image']) ? asset('img/' . $item['image']) : asset('img/sem-imagem.png') }}"
+                                alt="{{ $item['title'] }}">
+
+                            <div>
+                                <div class="cart-item-title">{{ $item['title'] }}</div>
+
+                                <div class="cart-item-meta">
+                                    Tamanho: {{ $item['size'] }} &nbsp;|&nbsp; Cor: {{ $item['color'] }}
+                                </div>
+
+                                <div class="cart-item-meta">
+                                    Unitário: R$ {{ number_format($item['unit_price'], 2, ',', '.') }}
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2 mt-2 mb-2">
+                                    <form method="POST" action="{{ route('cart.update') }}"
+                                        style="display:inline;">
+                                        @csrf
+                                        <input type="hidden" name="key" value="{{ $key }}">
+                                        <input type="hidden" name="quantity"
+                                            value="{{ max(1, $item['quantity'] - 1) }}">
+                                        <button type="submit"
+                                            style="width:26px;height:26px;border:none;border-radius:999px;background:#751597;color:#fff;">
+                                            -
+                                        </button>
+                                    </form>
+
+                                    <span style="font-size:12px; min-width:24px; text-align:center;">
+                                        {{ $item['quantity'] }}
+                                    </span>
+
+                                    <form method="POST" action="{{ route('cart.update') }}"
+                                        style="display:inline;">
+                                        @csrf
+                                        <input type="hidden" name="key" value="{{ $key }}">
+                                        <input type="hidden" name="quantity"
+                                            value="{{ min($item['stock'] ?? $item['quantity'], $item['quantity'] + 1) }}">
+                                        <button type="submit"
+                                            style="width:26px;height:26px;border:none;border-radius:999px;background:#751597;color:#fff;">
+                                            +
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <div class="cart-item-price">
+                                        R$ {{ number_format($item['total_value'], 2, ',', '.') }}
+                                    </div>
+
+                                    <button type="submit" form="cart-remove-{{ $key }}"
+                                        class="btn btn-link p-0"
+                                        style="font-size:11px;color:#ff9b9b;text-decoration:underline;">
+                                        remover
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="cart-remove-{{ $key }}" method="POST"
+                            action="{{ route('cart.remove') }}" style="display:none;">
+                            @csrf
+                            <input type="hidden" name="key" value="{{ $key }}">
+                        </form>
+                    @endforeach
+                @endif
+            </div>
+
+            <div class="cart-footer">
+                <div class="cart-total-row">
+                    <span>Total</span>
+                    <span id="cart-total">
+                        R$ {{ number_format($cartTotal, 2, ',', '.') }}
+                    </span>
+                </div>
+
+                <button type="submit" class="cart-primary-btn" id="cart-checkout" form="cart-resumo-form">
+                    Finalizar compra
+                </button>
+
+                <button type="button" class="cart-secondary-btn" id="cart-continue">
+                    Continuar comprando
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
     {{-- POPUP CONTA DO USUÁRIO (QUANDO LOGADO) --}}
     <div id="user-popup-overlay" class="user-popup-overlay">
@@ -1189,10 +1251,11 @@
                     GERENCIAR CONTA
                 </button>
 
-                <a href="{{ route('account.logout') }}"><button type="button" class="user-popup-btn" id="user-popup-logout">
-                    <i class="bi bi-box-arrow-right"></i>
-                    SAIR
-                </button></a>
+                <a href="{{ route('account.logout') }}"><button type="button" class="user-popup-btn"
+                        id="user-popup-logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                        SAIR
+                    </button></a>
             </div>
         </div>
     </div>
@@ -1213,20 +1276,14 @@
 
                     <div class="campo-input">
                         <i class="bi bi-envelope"></i>
-                        <input type="email"
-                               id="login-email"
-                               name="email"
-                               placeholder="Digite seu e-mail"
-                               required>
+                        <input type="email" id="login-email" name="email" placeholder="Digite seu e-mail"
+                            required>
                     </div>
 
                     <div class="campo-input">
                         <i class="bi bi-lock"></i>
-                        <input type="password"
-                               id="login-senha"
-                               name="senha"
-                               placeholder="Digite sua senha"
-                               required>
+                        <input type="password" id="login-senha" name="senha" placeholder="Digite sua senha"
+                            required>
                     </div>
 
                     <button type="submit">Entrar</button>
@@ -1243,22 +1300,41 @@
                             <div class="grid-cadastro">
                                 <div class="campo-input">
                                     <i class="bi bi-person"></i>
-                                    <input type="text" id="cadastro-nome" name="nome" placeholder="Digite seu nome" required>
+                                    <input type="text" id="cadastro-nome" name="nome"
+                                        placeholder="Digite seu nome" required>
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-envelope"></i>
-                                    <input type="email" id="cadastro-email" name="email" placeholder="Digite seu e-mail" required>
+                                    <input type="email" id="cadastro-email" name="email"
+                                        placeholder="Digite seu e-mail" required>
                                 </div>
 
-                                <div class="campo-input">
-                                    <i class="bi bi-lock"></i>
-                                    <input type="password" id="cadastro-senha" name="senha" placeholder="Crie uma senha" required>
+
+                                <div class="campo-senha-flutuante">
+                                    <div class="campo-input">
+                                        <i class="bi bi-lock"></i>
+                                        <input type="password" id="cadastro-senha" name="senha"
+                                            placeholder="Crie uma senha" minlength="8" maxlength="50" required>
+                                    </div>
+
+                                    <!--
+                                    <div class="cadastro-password-hint" id="cadastro-password-hint">
+                                        <strong>Sua senha deve conter:</strong>
+                                        8 ou mais caracteres, letra maiúscula, letra minúscula, número e caractere
+                                        especial.
+                                        <span class="cadastro-password-status" id="cadastro-password-status">
+                                            Digite uma senha segura.
+                                        </span>
+                                    </div>
+                                -->
                                 </div>
+
 
                                 <div class="campo-input">
                                     <i class="bi bi-lock-fill"></i>
-                                    <input type="password" name="confirmar_senha" placeholder="Confirme sua senha" id="cadastro-confirmar-senha-2" required>
+                                    <input type="password" name="confirmar_senha" placeholder="Confirme sua senha"
+                                        id="cadastro-confirmar-senha-2" minlength="8" maxlength="50" required>
                                 </div>
                             </div>
                         </div>
@@ -1267,22 +1343,26 @@
                             <div class="grid-cadastro">
                                 <div class="campo-input">
                                     <i class="bi bi-person"></i>
-                                    <input type="text" name="sobrenome" placeholder="Digite o sobrenome" id="cadastro-sobrenome-2">
+                                    <input type="text" name="sobrenome" placeholder="Digite o sobrenome"
+                                        id="cadastro-sobrenome-2" required>
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-telephone"></i>
-                                    <input type="text" name="telefone" placeholder="Digite o telefone" id="cadastro-telefone-2">
+                                    <input type="text" name="telefone" placeholder="Digite o telefone"
+                                        id="cadastro-telefone-2" required>
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-calendar-event"></i>
-                                    <input type="date" name="data_nascimento" placeholder="Data de nascimento" id="cadastro-nascimento-2">
+                                    <input type="date" name="data_nascimento" placeholder="Data de nascimento"
+                                        id="cadastro-nascimento-2" required>
                                 </div>
 
                                 <div class="campo-input">
                                     <i class="bi bi-person-vcard"></i>
-                                    <input type="text" id="cadastro-cpf" name="cpf" placeholder="Digite seu CPF">
+                                    <input type="text" id="cadastro-cpf" name="cpf"
+                                        placeholder="Digite seu CPF" required>
                                 </div>
                             </div>
                         </div>
@@ -1299,7 +1379,7 @@
                 <h2 id="middle-titulo">Bem-vindo à Crofline</h2>
                 <p id="middle-texto">Cadastre-se para começar</p>
                 <button id="middle-botao" class="botao-cadastrar-label"
-                        onclick="document.getElementById('toggle').click()">
+                    onclick="document.getElementById('toggle').click()">
                     Cadastrar
                 </button>
             </div>
@@ -1310,8 +1390,7 @@
         </button>
     </div>
 
-    <div id="cadastro-sucesso"
-         class="cadastro-sucesso-overlay @if(session('success')) ativo @endif">
+    <div id="cadastro-sucesso" class="cadastro-sucesso-overlay @if (session('success')) ativo @endif">
         <div class="cadastro-sucesso-card">
             <i class="bi bi-check-circle-fill"></i>
             <div>
@@ -1330,10 +1409,10 @@
 
         window.CROFLINE_CART_OPEN = @json(session('cart_open') || session('cart_success'));
         window.CROFLINE_CART_SUCCESS_MESSAGE = @json(session('cart_success'));
-        window.CROFLINE_CART_ERROR_MESSAGE   = @json(session('cart_error'));
+        window.CROFLINE_CART_ERROR_MESSAGE = @json(session('cart_error'));
 
-        const CROFLINE_USER_ID    = @json($userId);
-        const CROFLINE_USER_NAME  = @json($userName);
+        const CROFLINE_USER_ID = @json($userId);
+        const CROFLINE_USER_NAME = @json($userName);
         const CROFLINE_USER_EMAIL = @json($userEmail);
     </script>
 
@@ -1451,29 +1530,140 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const loginIcon       = document.getElementById('btn-login');
-            const toggle          = document.getElementById('toggle');
-            const titulo          = document.getElementById('middle-titulo');
-            const texto           = document.getElementById('middle-texto');
-            const botao           = document.getElementById('middle-botao');
-            const botaoFechar     = document.querySelector('.fechar-popup');
-            const containerPopup  = document.getElementById('container-popup');
-            const btnContinuar    = document.getElementById('btn-continuar-cadastro');
-            const btnVoltarEtapa  = document.getElementById('btn-voltar-etapa');
-            const formLogin       = document.getElementById('form-login');
-            const formCadastro    = document.getElementById('form-cadastro');
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginIcon = document.getElementById('btn-login');
+            const toggle = document.getElementById('toggle');
+            const titulo = document.getElementById('middle-titulo');
+            const texto = document.getElementById('middle-texto');
+            const botao = document.getElementById('middle-botao');
+            const botaoFechar = document.querySelector('.fechar-popup');
+            const containerPopup = document.getElementById('container-popup');
+            const btnContinuar = document.getElementById('btn-continuar-cadastro');
+            const btnVoltarEtapa = document.getElementById('btn-voltar-etapa');
+            const formLogin = document.getElementById('form-login');
+            const formCadastro = document.getElementById('form-cadastro');
 
             const userPopupOverlay = document.getElementById('user-popup-overlay');
-            const userPopupClose   = document.getElementById('user-popup-close');
-            const userPopupLogout  = document.getElementById('user-popup-logout');
-            const userPopupManage  = document.getElementById('user-popup-manage');
+            const userPopupClose = document.getElementById('user-popup-close');
+            const userPopupLogout = document.getElementById('user-popup-logout');
+            const userPopupManage = document.getElementById('user-popup-manage');
+
+            const cadastroSenhaInput = document.getElementById('cadastro-senha');
+            const cadastroConfirmarSenhaInput = document.getElementById('cadastro-confirmar-senha-2');
+            const cadastroPasswordStatus = document.getElementById('cadastro-password-status');
+            const cadastroPasswordHint = document.getElementById('cadastro-password-hint');
+
+            function validarForcaSenha(senha) {
+                const temMinimo = senha.length >= 8;
+                const temMaiuscula = /[A-Z]/.test(senha);
+                const temMinuscula = /[a-z]/.test(senha);
+                const temNumero = /[0-9]/.test(senha);
+                const temEspecial = /[@$!%*#?&._\-]/.test(senha);
+
+                const total = [
+                    temMinimo,
+                    temMaiuscula,
+                    temMinuscula,
+                    temNumero,
+                    temEspecial
+                ].filter(Boolean).length;
+
+                return {
+                    temMinimo,
+                    temMaiuscula,
+                    temMinuscula,
+                    temNumero,
+                    temEspecial,
+                    total
+                };
+            }
+
+            function atualizarDicaSenha() {
+                if (!cadastroSenhaInput || !cadastroPasswordStatus) return;
+
+                const senha = cadastroSenhaInput.value || '';
+                const resultado = validarForcaSenha(senha);
+
+                if (!senha.length) {
+                    cadastroPasswordStatus.textContent = 'Digite uma senha segura.';
+                    cadastroPasswordStatus.classList.remove('forte', 'media');
+                    return;
+                }
+
+                if (
+                    resultado.temMinimo &&
+                    resultado.temMaiuscula &&
+                    resultado.temMinuscula &&
+                    resultado.temNumero &&
+                    resultado.temEspecial
+                ) {
+                    cadastroPasswordStatus.textContent = 'Senha forte.';
+                    cadastroPasswordStatus.classList.remove('media');
+                    cadastroPasswordStatus.classList.add('forte');
+                    return;
+                }
+
+                if (resultado.total >= 3) {
+                    cadastroPasswordStatus.textContent = 'Senha média. Adicione mais segurança.';
+                    cadastroPasswordStatus.classList.remove('forte');
+                    cadastroPasswordStatus.classList.add('media');
+                    return;
+                }
+
+                cadastroPasswordStatus.textContent =
+                    'Senha fraca. Use maiúscula, minúscula, número e caractere especial.';
+                cadastroPasswordStatus.classList.remove('forte', 'media');
+            }
+
+            if (cadastroSenhaInput) {
+                cadastroSenhaInput.addEventListener('focus', function() {
+                    if (cadastroPasswordHint) {
+                        cadastroPasswordHint.classList.add('ativo');
+                    }
+                });
+
+                cadastroSenhaInput.addEventListener('input', function() {
+                    atualizarDicaSenha();
+
+                    if (cadastroPasswordHint) {
+                        cadastroPasswordHint.classList.add('ativo');
+                    }
+                });
+
+                cadastroSenhaInput.addEventListener('blur', function() {
+                    if (!cadastroSenhaInput.value.trim() && cadastroPasswordHint) {
+                        cadastroPasswordHint.classList.remove('ativo');
+                    }
+                });
+            }
+
+            if (cadastroConfirmarSenhaInput && cadastroSenhaInput) {
+                cadastroConfirmarSenhaInput.addEventListener('input', function() {
+                    if (!this.value.length) return;
+
+                    if (this.value !== cadastroSenhaInput.value) {
+                        this.setCustomValidity('As senhas não conferem.');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+
+                cadastroSenhaInput.addEventListener('input', function() {
+                    if (!cadastroConfirmarSenhaInput.value.length) return;
+
+                    if (cadastroConfirmarSenhaInput.value !== cadastroSenhaInput.value) {
+                        cadastroConfirmarSenhaInput.setCustomValidity('As senhas não conferem.');
+                    } else {
+                        cadastroConfirmarSenhaInput.setCustomValidity('');
+                    }
+                });
+            }
 
             atualizarHeaderScroll();
             window.addEventListener('scroll', atualizarHeaderScroll);
 
             if (loginIcon) {
-                loginIcon.addEventListener('click', function () {
+                loginIcon.addEventListener('click', function() {
                     if (CROFLINE_USER_ID) {
                         abrirPopupConta();
                     } else {
@@ -1483,7 +1673,7 @@
             }
 
             if (userPopupOverlay) {
-                userPopupOverlay.addEventListener('click', function (e) {
+                userPopupOverlay.addEventListener('click', function(e) {
                     if (e.target === userPopupOverlay) {
                         fecharPopupConta();
                     }
@@ -1495,14 +1685,14 @@
             }
 
             if (userPopupLogout) {
-                userPopupLogout.addEventListener('click', function () {
+                userPopupLogout.addEventListener('click', function() {
                     fecharPopupConta();
                 });
             }
 
             if (userPopupManage) {
-                userPopupManage.addEventListener('click', function () {
-                    // futura página "minha conta"
+                userPopupManage.addEventListener('click', function() {
+                    window.location.href = "{{ route('account.gerenciarConta') }}";
                 });
             }
 
@@ -1529,19 +1719,19 @@
             }
 
             if (btnContinuar && containerPopup) {
-                btnContinuar.addEventListener('click', function () {
+                btnContinuar.addEventListener('click', function() {
                     containerPopup.classList.add('step-2');
                 });
             }
 
             if (btnVoltarEtapa && containerPopup) {
-                btnVoltarEtapa.addEventListener('click', function () {
+                btnVoltarEtapa.addEventListener('click', function() {
                     containerPopup.classList.remove('step-2');
                 });
             }
 
             if (formLogin) {
-                formLogin.addEventListener('submit', async function (e) {
+                formLogin.addEventListener('submit', async function(e) {
                     e.preventDefault();
 
                     if (!formLogin.checkValidity()) {
@@ -1598,7 +1788,7 @@
             }
 
             if (formCadastro) {
-                formCadastro.addEventListener('submit', async function (e) {
+                formCadastro.addEventListener('submit', async function(e) {
                     e.preventDefault();
 
                     if (!formCadastro.checkValidity()) {
@@ -1607,17 +1797,36 @@
                     }
 
                     const senha = document.getElementById('cadastro-senha')?.value || '';
-                    const confirmar = document.getElementById('cadastro-confirmar-senha-2')?.value || '';
+                    const confirmar = document.getElementById('cadastro-confirmar-senha-2')?.value ||
+                        '';
 
                     if (senha !== confirmar) {
                         alert('As senhas não conferem.');
                         return;
                     }
 
+                    const senhaValidacao = validarForcaSenha(senha);
+
+                    if (
+                        !senhaValidacao.temMinimo ||
+                        !senhaValidacao.temMaiuscula ||
+                        !senhaValidacao.temMinuscula ||
+                        !senhaValidacao.temNumero ||
+                        !senhaValidacao.temEspecial
+                    ) {
+                        alert(
+                            'Sua senha não é segura o suficiente. Use no mínimo 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.'
+                        );
+                        return;
+                    }
+
                     const formData = new FormData(formCadastro);
-                    formData.append('sobrenome', document.getElementById('cadastro-sobrenome-2')?.value || '');
-                    formData.append('telefone', document.getElementById('cadastro-telefone-2')?.value || '');
-                    formData.append('data_nascimento', document.getElementById('cadastro-nascimento-2')?.value || '');
+                    formData.append('sobrenome', document.getElementById('cadastro-sobrenome-2')
+                        ?.value || '');
+                    formData.append('telefone', document.getElementById('cadastro-telefone-2')?.value ||
+                        '');
+                    formData.append('data_nascimento', document.getElementById('cadastro-nascimento-2')
+                        ?.value || '');
 
                     const token = document
                         .querySelector('meta[name="csrf-token"]')
@@ -1664,11 +1873,11 @@
                 });
             }
 
-            const btnMenuMobile   = document.getElementById('btn-menu-mobile');
-            const menuMobile      = document.getElementById('menu-mobile');
-            const overlayMenu     = document.getElementById('menu-mobile-overlay');
-            const btnCloseMenu    = document.getElementById('btn-close-menu');
-            const btnLoginMobile  = document.getElementById('btn-login-mobile');
+            const btnMenuMobile = document.getElementById('btn-menu-mobile');
+            const menuMobile = document.getElementById('menu-mobile');
+            const overlayMenu = document.getElementById('menu-mobile-overlay');
+            const btnCloseMenu = document.getElementById('btn-close-menu');
+            const btnLoginMobile = document.getElementById('btn-login-mobile');
 
             function abrirMenuMobile() {
                 if (menuMobile) menuMobile.classList.add('aberto');
@@ -1691,7 +1900,7 @@
             }
 
             if (btnLoginMobile) {
-                btnLoginMobile.addEventListener('click', function () {
+                btnLoginMobile.addEventListener('click', function() {
                     fecharMenuMobile();
                     if (CROFLINE_USER_ID) {
                         abrirPopupConta();

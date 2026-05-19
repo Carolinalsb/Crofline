@@ -35,10 +35,23 @@ class PagamentoController extends Controller
             'produtos.*.valor'           => 'required|numeric|min:0.01',
         ]);
 
+        $produtosRecebidos = $request->input('produtos', []);
+        $idsProdutos = collect($produtosRecebidos)->pluck('id_produto')->unique()->values()->all();
+
+        $titulos = DB::table('produtos')
+            ->whereIn('id', $idsProdutos)
+            ->pluck('titulo', 'id');
+
+        $produtos = [];
+        foreach ($produtosRecebidos as $produto) {
+            $produto['titulo'] = $titulos[$produto['id_produto']] ?? ('Produto #' . $produto['id_produto']);
+            $produtos[] = $produto;
+        }
+
         $payload = [
             'id_usuario' => $idUsuario,
             'total'      => (float) $request->input('total'),
-            'produtos'   => $request->input('produtos'),
+            'produtos'   => $produtos,
         ];
 
         session()->put('checkout_payload', $payload);
@@ -62,9 +75,17 @@ class PagamentoController extends Controller
         $request->validate([
             'payer_email'   => 'required|email',
             'payer_name'    => 'required|string|max:120',
-            'doc_type'      => 'nullable|string|max:10',
-            'doc_number'    => 'nullable|string|max:30',
+            'doc_type'      => 'required|string|in:CPF,CNPJ',
+            'doc_number'    => 'required|string|max:30',
         ]);
+
+        $docNumber = $this->normalizeDocument($request->doc_number);
+
+        if (!$this->isValidDocumentByType($request->doc_type, $docNumber)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Documento inválido para o tipo selecionado.');
+        }
 
         $buyCode = strtoupper(Str::random(10));
 
@@ -82,12 +103,12 @@ class PagamentoController extends Controller
                 'external_reference' => $buyCode,
                 'notification_url'   => route('pagamento.checkoutResp'),
                 'payer' => [
-                    'email'         => $request->payer_email,
-                    'first_name'    => $request->payer_name,
-                    'entity_type'   => 'individual',
+                    'email'       => $request->payer_email,
+                    'first_name'  => $request->payer_name,
+                    'entity_type' => 'individual',
                     'identification' => [
-                        'type'   => $request->doc_type ?: 'CPF',
-                        'number' => $request->doc_number ?: '00000000000',
+                        'type'   => $request->doc_type,
+                        'number' => $docNumber,
                     ],
                 ],
             ], $requestOptions);
@@ -149,9 +170,17 @@ class PagamentoController extends Controller
             'payment_method_id'       => 'required|string',
             'issuer_id'               => 'nullable',
             'installments'            => 'nullable|integer|min:1',
-            'identification_type'     => 'required|string',
+            'identification_type'     => 'required|string|in:CPF,CNPJ',
             'identification_number'   => 'required|string',
         ]);
+
+        $identificationNumber = $this->normalizeDocument($request->identification_number);
+
+        if (!$this->isValidDocumentByType($request->identification_type, $identificationNumber)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Documento do titular inválido.');
+        }
 
         $buyCode = strtoupper(Str::random(10));
 
@@ -175,7 +204,7 @@ class PagamentoController extends Controller
                     'email' => $request->payer_email,
                     'identification' => [
                         'type'   => $request->identification_type,
-                        'number' => $request->identification_number,
+                        'number' => $identificationNumber,
                     ],
                 ],
             ], $requestOptions);
@@ -391,5 +420,23 @@ class PagamentoController extends Controller
         }
 
         DB::commit();
+    }
+
+    private function normalizeDocument(?string $value): string
+    {
+        return preg_replace('/\D/', '', (string) $value);
+    }
+
+    private function isValidDocumentByType(string $type, string $number): bool
+    {
+        if ($type === 'CPF') {
+            return strlen($number) === 11;
+        }
+
+        if ($type === 'CNPJ') {
+            return strlen($number) === 14;
+        }
+
+        return false;
     }
 }
