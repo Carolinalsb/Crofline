@@ -10,6 +10,7 @@
         'cinza'            => '#808080',
         'marrom'           => '#8B4513',
         'azul'             => '#1E90FF',
+        'azul claro'       => '#90D5FF',
         'rosa'             => '#FF6FB5',
         'roxo'             => '#7B2CBF',
         'branco'           => '#FFFFFF',
