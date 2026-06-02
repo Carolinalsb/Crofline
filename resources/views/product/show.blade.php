@@ -8,6 +8,7 @@
     $mapaCores = [
         'preto'            => '#000000',
         'cinza'            => '#808080',
+        'vinho'            => '#722F37',
         'marrom'           => '#8B4513',
         'azul'             => '#1E90FF',
         'azul claro'       => '#90D5FF',
